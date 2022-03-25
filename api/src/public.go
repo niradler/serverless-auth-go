@@ -17,14 +17,40 @@ var ginLambda *ginadapter.GinLambda
 func LoadRoutes(r *gin.Engine) {
 
 	r.POST("/public/login", func(context *gin.Context) {
+		type Body struct {
+			Email    uint `json:"email" binding:"required"`
+			Password uint `json:"password" binding:"required"`
+		}
+		body := Body{}
+		if context.ShouldBindJSON(&body) != nil {
+			context.AbortWithStatusJSON(http.StatusBadRequest,
+				gin.H{
+					"error":   "ValidationError",
+					"message": "Invalid inputs. Please check your inputs"})
+			return
+		}
+
 		context.JSON(http.StatusOK, gin.H{
-			"message": "Auth server is up!",
+			"message": "Login success",
 		})
 	})
 
 	r.POST("/public/signup", func(context *gin.Context) {
+		type Body struct {
+			Email    uint `json:"email" binding:"required"`
+			Password uint `json:"password" binding:"required"`
+		}
+		body := Body{}
+		if context.ShouldBindJSON(&body) != nil {
+			context.AbortWithStatusJSON(http.StatusBadRequest,
+				gin.H{
+					"error":   "ValidationError",
+					"message": "Invalid inputs. Please check your inputs"})
+			return
+		}
+
 		context.JSON(http.StatusOK, gin.H{
-			"message": "Auth server is up!",
+			"message": "Signup success",
 		})
 	})
 
