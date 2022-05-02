@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,15 +19,17 @@ func LoadRoutes(r *gin.Engine) {
 
 	r.POST("/public/login", func(context *gin.Context) {
 		type Body struct {
-			Email    uint `json:"email" binding:"required"`
-			Password uint `json:"password" binding:"required"`
+			Email    string `json:"email" binding:"required"`
+			Password string `json:"password" binding:"required"`
 		}
 		body := Body{}
-		if context.ShouldBindJSON(&body) != nil {
+		err := context.ShouldBindJSON(&body)
+		if err != nil {
 			context.AbortWithStatusJSON(http.StatusBadRequest,
 				gin.H{
 					"error":   "ValidationError",
-					"message": "Invalid inputs. Please check your inputs"})
+					"message": err.Error(),
+				})
 			return
 		}
 
@@ -41,11 +44,15 @@ func LoadRoutes(r *gin.Engine) {
 			Password uint `json:"password" binding:"required"`
 		}
 		body := Body{}
-		if context.ShouldBindJSON(&body) != nil {
+		err := context.ShouldBindJSON(&body)
+		if err != nil {
+			log.Printf("fmt")
+			fmt.Println(err)
 			context.AbortWithStatusJSON(http.StatusBadRequest,
 				gin.H{
 					"error":   "ValidationError",
-					"message": "Invalid inputs. Please check your inputs"})
+					"message": err.Error(),
+				})
 			return
 		}
 
