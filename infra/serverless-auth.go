@@ -28,7 +28,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("../api/build/public"), nil),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build/public"), nil),
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment: &map[string]*string{
@@ -41,7 +41,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("../api/build/private"), nil),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build/private"), nil),
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment: &map[string]*string{
@@ -54,7 +54,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("../api/build/admin"), nil),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build/admin"), nil),
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment: &map[string]*string{
