@@ -49,9 +49,9 @@ func LoadRoutes(router *gin.Engine) {
 
 		public.POST("/signup", func(context *gin.Context) {
 			type Body struct {
-				Email    uint        `json:"email" binding:"required"`
-				Password uint        `json:"password" binding:"required"`
-				Data     interface{} `json:"data" binding:"optional"`
+				Email    string      `json:"email" binding:"required"`
+				Password string      `json:"password" binding:"required"`
+				Data     interface{} `json:"data"`
 			}
 			body := Body{}
 			err := context.ShouldBindJSON(&body)
@@ -68,6 +68,7 @@ func LoadRoutes(router *gin.Engine) {
 
 			context.JSON(http.StatusOK, gin.H{
 				"message": "Signup success",
+				"email":   body.Email,
 			})
 		})
 	}
