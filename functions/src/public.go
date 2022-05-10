@@ -19,24 +19,10 @@ func LoadRoutes(router *gin.Engine) {
 
 	public := router.Group("/public")
 	{
-		public.POST("/login", func(context *gin.Context) {
-			type Body struct {
-				Email    string `json:"email" binding:"required"`
-				Password string `json:"password" binding:"required"`
-			}
-			body := Body{}
-			err := context.ShouldBindJSON(&body)
-			if err != nil {
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "ValidationError",
-						"message": err.Error(),
-					})
-				return
-			}
+		public.GET("/me", func(context *gin.Context) {
 
 			context.JSON(http.StatusOK, gin.H{
-				"message": "Login success",
+				"message": "my details",
 			})
 		})
 
@@ -63,8 +49,9 @@ func LoadRoutes(router *gin.Engine) {
 
 		public.POST("/signup", func(context *gin.Context) {
 			type Body struct {
-				Email    uint `json:"email" binding:"required"`
-				Password uint `json:"password" binding:"required"`
+				Email    uint        `json:"email" binding:"required"`
+				Password uint        `json:"password" binding:"required"`
+				Data     interface{} `json:"data" binding:"optional"`
 			}
 			body := Body{}
 			err := context.ShouldBindJSON(&body)
