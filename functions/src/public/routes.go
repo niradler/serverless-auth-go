@@ -1,31 +1,17 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
-	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
 )
-
-var ginLambda *ginadapter.GinLambda
 
 func LoadRoutes(router *gin.Engine) {
 
 	public := router.Group("/public")
 	{
-		public.GET("/me", func(context *gin.Context) {
-
-			context.JSON(http.StatusOK, gin.H{
-				"message": "my details",
-			})
-		})
-
 		public.POST("/login", func(context *gin.Context) {
 			type Body struct {
 				Email    string `json:"email" binding:"required"`
@@ -41,10 +27,22 @@ func LoadRoutes(router *gin.Engine) {
 					})
 				return
 			}
+			check, _ := VerifyPassword(body.Password, HashPassword("demo"))
+			if body.Email == "demo@demo.com" && check {
+				token, refreshToken, _ := GenerateToken(body.Email)
+				context.JSON(http.StatusOK, gin.H{
+					"token":         token,
+					"refresh_token": refreshToken,
+					"message":       "Login success",
+				})
+				return
+			}
 
-			context.JSON(http.StatusOK, gin.H{
-				"message": "Login success",
-			})
+			context.AbortWithStatusJSON(http.StatusBadRequest,
+				gin.H{
+					"error":   "ValidationError",
+					"message": "Failed to validate",
+				})
 		})
 
 		public.POST("/signup", func(context *gin.Context) {
@@ -65,33 +63,13 @@ func LoadRoutes(router *gin.Engine) {
 					})
 				return
 			}
+			password := HashPassword(body.Password)
 
 			context.JSON(http.StatusOK, gin.H{
-				"message": "Signup success",
-				"email":   body.Email,
+				"message":  "Signup success",
+				"password": password,
+				"email":    body.Email,
 			})
 		})
 	}
-}
-
-func Handler(
-	ctx context.Context,
-	req events.APIGatewayProxyRequest,
-) (events.APIGatewayProxyResponse, error) {
-	return ginLambda.ProxyWithContext(ctx, req)
-}
-
-func main() {
-	log.Printf("Gin cold start")
-	router := gin.Default()
-	router.Use(gin.Logger())
-	LoadRoutes(router)
-
-	ginLambda = ginadapter.New(router)
-
-	if os.Getenv("LAMBDA_TASK_ROOT") != "" {
-		lambda.Start(Handler)
-		return
-	}
-	router.Run("localhost:8282")
 }
