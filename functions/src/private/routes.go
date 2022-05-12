@@ -13,6 +13,11 @@ func LoadRoutes(router *gin.Engine) {
 		private.GET("/me", func(context *gin.Context) {
 			claims, validate := ValidateTokenMiddleware(context)
 			if validate != true {
+				context.AbortWithStatusJSON(http.StatusForbidden,
+				gin.H{
+					"error":   "Forbidden",
+					"message": "Forbidden",
+				})
 				return
 			}
 			context.JSON(http.StatusOK, gin.H{
