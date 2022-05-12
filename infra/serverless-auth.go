@@ -49,19 +49,6 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		},
 	})
 
-	adminFunc := awslambda.NewFunction(stack, jsii.String("API-admin-handler"), &awslambda.FunctionProps{
-		FunctionName: jsii.String(*stack.StackName() + "-admin-api"),
-		Runtime:      awslambda.Runtime_GO_1_X(),
-		MemorySize:   jsii.Number(128),
-		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build/admin"), nil),
-		Handler:      jsii.String("main"),
-		LogRetention: awslogs.RetentionDays_ONE_WEEK,
-		Environment: &map[string]*string{
-			"DYNAMODB_TABLE": jsii.String(*stack.StackName() + "-table"),
-		},
-	})
-
 	restApi := awsapigateway.NewRestApi(stack, jsii.String("RestApi"), &awsapigateway.RestApiProps{
 		RestApiName:        jsii.String(*stack.StackName() + "-RestApi"),
 		RetainDeployments:  jsii.Bool(false),
@@ -82,9 +69,6 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 	privateRes := rootRes.AddResource(jsii.String("private"), nil).AddResource(jsii.String("{proxy+}"), nil)
 	privateRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(privateFunc, nil), nil)
 
-	adminRes := rootRes.AddResource(jsii.String("admin"), nil).AddResource(jsii.String("{proxy+}"), nil)
-	adminRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(adminFunc, nil), nil)
-
 	usersTable := awsdynamodb.NewTable(stack, jsii.String("auth-table"), &awsdynamodb.TableProps{
 		TableName:     jsii.String(*stack.StackName() + "-table"),
 		BillingMode:   awsdynamodb.BillingMode_PAY_PER_REQUEST,
@@ -101,7 +85,6 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 
 	usersTable.GrantWriteData(publicFunc)
 	usersTable.GrantWriteData(privateFunc)
-	usersTable.GrantWriteData(adminFunc)
 
 	return stack
 }
