@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LoadRoutes(router *gin.Engine) {
+func LoadPublicRoutes(router *gin.RouterGroup) {
 
-	public := router.Group("/public")
+	public := router.Group("/auth")
 	{
 		public.POST("/login", func(context *gin.Context) {
 			type Body struct {
@@ -64,7 +64,10 @@ func LoadRoutes(router *gin.Engine) {
 				return
 			}
 			password := HashPassword(body.Password)
-
+			// db.CreateUser(db.UserPayload{
+			// 	Email:    "demo@demo.com",
+			// 	Password: "Password",
+			// })
 			context.JSON(http.StatusOK, gin.H{
 				"message":  "Signup success",
 				"password": password,

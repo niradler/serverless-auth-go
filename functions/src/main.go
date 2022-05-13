@@ -24,7 +24,9 @@ func main() {
 	log.Printf("Gin cold start")
 	router := gin.Default()
 	router.Use(gin.Logger())
-	LoadRoutes(router)
+	v1 := router.Group("/v1")
+	LoadPrivateRoutes(v1)
+	LoadPublicRoutes(v1)
 
 	ginLambda = ginadapter.New(router)
 

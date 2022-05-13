@@ -23,25 +23,12 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 
 	// The code that defines your stack goes here
 
-	publicFunc := awslambda.NewFunction(stack, jsii.String("API-public-handler"), &awslambda.FunctionProps{
-		FunctionName: jsii.String(*stack.StackName() + "-public-api"),
+	authFunc := awslambda.NewFunction(stack, jsii.String("API-public-handler"), &awslambda.FunctionProps{
+		FunctionName: jsii.String(*stack.StackName() + "-auth-api"),
 		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build/public"), nil),
-		Handler:      jsii.String("main"),
-		LogRetention: awslogs.RetentionDays_ONE_WEEK,
-		Environment: &map[string]*string{
-			"DYNAMODB_TABLE": jsii.String(*stack.StackName() + "-table"),
-		},
-	})
-
-	privateFunc := awslambda.NewFunction(stack, jsii.String("API-private-handler"), &awslambda.FunctionProps{
-		FunctionName: jsii.String(*stack.StackName() + "-private-api"),
-		Runtime:      awslambda.Runtime_GO_1_X(),
-		MemorySize:   jsii.Number(128),
-		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build/private"), nil),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build"), nil),
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment: &map[string]*string{
@@ -60,14 +47,11 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 	})
 
 	rootRes := restApi.Root()
-	rootRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(publicFunc, nil), nil)
-	publicRes := rootRes.AddResource(jsii.String("public"), nil)
-	publicRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(publicFunc, nil), nil)
-	publicProxyRes := publicRes.AddResource(jsii.String("{proxy+}"), nil)
-	publicProxyRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(publicFunc, nil), nil)
-
-	privateRes := rootRes.AddResource(jsii.String("private"), nil).AddResource(jsii.String("{proxy+}"), nil)
-	privateRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(privateFunc, nil), nil)
+	rootRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(authFunc, nil), nil)
+	authRootRes := rootRes.AddResource(jsii.String("v1"), nil)
+	authRootRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(authFunc, nil), nil)
+	authProxyRes := authRootRes.AddResource(jsii.String("{proxy+}"), nil)
+	authProxyRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(authFunc, nil), nil)
 
 	usersTable := awsdynamodb.NewTable(stack, jsii.String("auth-table"), &awsdynamodb.TableProps{
 		TableName:     jsii.String(*stack.StackName() + "-table"),
@@ -83,8 +67,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		},
 	})
 
-	usersTable.GrantWriteData(publicFunc)
-	usersTable.GrantWriteData(privateFunc)
+	usersTable.GrantWriteData(authFunc)
 
 	return stack
 }

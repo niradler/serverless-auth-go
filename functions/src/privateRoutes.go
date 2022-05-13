@@ -6,18 +6,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LoadRoutes(router *gin.Engine) {
+func LoadPrivateRoutes(router *gin.RouterGroup) {
 
-	private := router.Group("/private")
+	private := router.Group("/user")
 	{
 		private.GET("/me", func(context *gin.Context) {
 			claims, validate := ValidateTokenMiddleware(context)
 			if validate != true {
 				context.AbortWithStatusJSON(http.StatusForbidden,
-				gin.H{
-					"error":   "Forbidden",
-					"message": "Forbidden",
-				})
+					gin.H{
+						"error":   "Forbidden",
+						"message": "Forbidden",
+					})
 				return
 			}
 			context.JSON(http.StatusOK, gin.H{

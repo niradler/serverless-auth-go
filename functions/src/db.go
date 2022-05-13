@@ -14,7 +14,6 @@ import (
 
 // var userTable = os.Getenv("USERS_TABLE")
 var usersTable = "ServerlessAuthStack-table"
-
 var db *dynamodb.DynamoDB
 
 func Init() {
@@ -81,16 +80,52 @@ func CreateUser(userPayload UserPayload) (*UserCreated, error) {
 	return &userCreated, nil
 }
 
-func main() {
-	log.Println("create user")
-	Init()
-	userCreated, err := CreateUser(UserPayload{
-		Email:    "demo@demo.com",
-		Password: "Password",
-	})
+func GetItem(rootObjId string, subObjId string) (map[string]interface{}, error) {
+	db := GetDB()
+	params := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"root_obj_id": {
+				S: aws.String(rootObjId),
+			},
+			"sub_obj_id": {
+				S: aws.String(subObjId),
+			},
+		},
+		TableName: aws.String(usersTable),
+	}
+	resp, err := db.GetItem(params)
 	if err != nil {
 		log.Println(err)
-		return
+		return nil, err
 	}
-	log.Println(userCreated)
+	var item interface{}
+	if err := dynamodbattribute.UnmarshalMap(resp.Item, &item); err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	value := item.(map[string]interface{})
+
+	return value, nil
+}
+
+func DeleteItem(rootObjId string, subObjId string) error {
+	db := GetDB()
+	params := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"root_obj_id": {
+				S: aws.String(rootObjId),
+			},
+			"sub_obj_id": {
+				S: aws.String(subObjId),
+			},
+		},
+		TableName: aws.String(usersTable),
+	}
+	_, err := db.DeleteItem(params)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
 }

@@ -12,12 +12,13 @@ import (
 
 func TestSignup(test *testing.T) {
 	router := gin.Default()
-	LoadRoutes(router)
+	LoadPrivateRoutes(router)
+	LoadPublicRoutes(router)
 	var userData = []byte(`{
 		"email": "demo@demo.com",
 		"password": "demo"
 	}`)
-	req, _ := http.NewRequest("POST", "/public/signup", bytes.NewBuffer(userData))
+	req, _ := http.NewRequest("POST", "/auth/signup", bytes.NewBuffer(userData))
 	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
 	req.Header.Add("Accept", "application/json")
 
