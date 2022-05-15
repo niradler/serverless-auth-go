@@ -1,3 +1,4 @@
 *.exe
 cdk.out
 *build*
+.env

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -27,15 +26,22 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 					})
 				return
 			}
-			check, _ := VerifyPassword(body.Password, HashPassword("demo"))
-			if body.Email == "demo@demo.com" && check {
-				token, refreshToken, _ := GenerateToken(body.Email)
-				context.JSON(http.StatusOK, gin.H{
-					"token":         token,
-					"refresh_token": refreshToken,
-					"message":       "Login success",
-				})
-				return
+			user, err := GetItem("org#default", "user#"+body.Email)
+			if err != nil {
+				log.Println(err)
+			}
+			if user != nil {
+				log.Println(user)
+				check, _ := VerifyPassword(body.Password, user["password"].(string))
+				if check {
+					token, refreshToken, _ := GenerateToken(body.Email)
+					context.JSON(http.StatusOK, gin.H{
+						"token":         token,
+						"refresh_token": refreshToken,
+						"message":       "Login success",
+					})
+					return
+				}
 			}
 
 			context.AbortWithStatusJSON(http.StatusBadRequest,
@@ -54,8 +60,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			body := Body{}
 			err := context.ShouldBindJSON(&body)
 			if err != nil {
-				log.Printf("fmt")
-				fmt.Println(err)
+				log.Println(err)
 				context.AbortWithStatusJSON(http.StatusBadRequest,
 					gin.H{
 						"error":   "ValidationError",
@@ -63,15 +68,33 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 					})
 				return
 			}
+			user, _ := GetItem("org#default", "user#"+body.Email)
+			if user != nil {
+				log.Println("Already exists")
+				context.AbortWithStatusJSON(http.StatusBadRequest,
+					gin.H{
+						"error":   "ValidationError",
+						"message": "Already exists",
+					})
+				return
+			}
 			password := HashPassword(body.Password)
-			// db.CreateUser(db.UserPayload{
-			// 	Email:    "demo@demo.com",
-			// 	Password: "Password",
-			// })
+			_, err = CreateUser(UserPayload{
+				Email:    body.Email,
+				Password: password,
+				Data:     body.Data,
+			})
+			if err != nil {
+				context.AbortWithStatusJSON(http.StatusBadRequest,
+					gin.H{
+						"error":   "ValidationError",
+						"message": err.Error(),
+					})
+				return
+			}
 			context.JSON(http.StatusOK, gin.H{
-				"message":  "Signup success",
-				"password": password,
-				"email":    body.Email,
+				"message": "Signup success",
+				"email":   body.Email,
 			})
 		})
 	}

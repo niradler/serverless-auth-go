@@ -48,10 +48,8 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 
 	rootRes := restApi.Root()
 	rootRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(authFunc, nil), nil)
-	authRootRes := rootRes.AddResource(jsii.String("v1"), nil)
-	authRootRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(authFunc, nil), nil)
-	authProxyRes := authRootRes.AddResource(jsii.String("{proxy+}"), nil)
-	authProxyRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(authFunc, nil), nil)
+	proxyRootRes := rootRes.AddResource(jsii.String("{proxy+}"), nil)
+	proxyRootRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(authFunc, nil), nil)
 
 	usersTable := awsdynamodb.NewTable(stack, jsii.String("auth-table"), &awsdynamodb.TableProps{
 		TableName:     jsii.String(*stack.StackName() + "-table"),

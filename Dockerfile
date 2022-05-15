@@ -1,5 +1,7 @@
 FROM golang:alpine
 
+VOLUME "~/.aws/:/root/.aws:ro"
+
 RUN apk update && apk add --update nodejs npm
 RUN npm install -g aws-cdk
 

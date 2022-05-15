@@ -29,19 +29,31 @@ func Init() {
 }
 
 func GetDB() *dynamodb.DynamoDB {
+	if db == nil {
+		sess, err := session.NewSession(&aws.Config{
+			Region:      aws.String("us-east-1"),
+			Credentials: credentials.NewSharedCredentials("", "default"),
+		})
+		if err != nil {
+			log.Println(err)
+		}
+		db = dynamodb.New(sess)
+	}
 	return db
 }
 
 type User struct {
-	ID        string `json:"root_obj_id,omitempty"`
-	Email     string `json:"sub_obj_id"`
-	Password  string `json:"password"`
-	UpdatedAt int64  `json:"updatedAt,omitempty"`
+	ID        string      `json:"root_obj_id,omitempty"`
+	Email     string      `json:"sub_obj_id"`
+	Password  string      `json:"password"`
+	UpdatedAt int64       `json:"updatedAt,omitempty"`
+	Data      interface{} `json:"data,omitempty"`
 }
 
 type UserPayload struct {
 	Email    string
 	Password string
+	Data     interface{}
 }
 
 type UserCreated struct {
@@ -53,10 +65,11 @@ type UserCreated struct {
 func CreateUser(userPayload UserPayload) (*UserCreated, error) {
 	db := GetDB()
 	user := User{
-		ID:        "org#test",
+		ID:        "org#default",
 		Email:     "user#" + userPayload.Email,
 		Password:  userPayload.Password,
 		UpdatedAt: time.Now().UnixNano(),
+		Data:      userPayload.Data,
 	}
 	item, err := dynamodbattribute.MarshalMap(user)
 	if err != nil {
@@ -103,9 +116,13 @@ func GetItem(rootObjId string, subObjId string) (map[string]interface{}, error) 
 		log.Println(err)
 		return nil, err
 	}
-	value := item.(map[string]interface{})
+	if item != nil {
+		value := item.(map[string]interface{})
 
-	return value, nil
+		return value, nil
+	}
+
+	return nil, nil
 }
 
 func DeleteItem(rootObjId string, subObjId string) error {
