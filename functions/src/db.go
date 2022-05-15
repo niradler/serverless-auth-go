@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"log"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -30,9 +31,13 @@ func Init() {
 
 func GetDB() *dynamodb.DynamoDB {
 	if db == nil {
+		var credentials = credentials.NewSharedCredentials("", "default")
+		if os.Getenv("LAMBDA_TASK_ROOT") != "" {
+			credentials = nil
+		}
 		sess, err := session.NewSession(&aws.Config{
 			Region:      aws.String("us-east-1"),
-			Credentials: credentials.NewSharedCredentials("", "default"),
+			Credentials: credentials,
 		})
 		if err != nil {
 			log.Println(err)
@@ -40,6 +45,12 @@ func GetDB() *dynamodb.DynamoDB {
 		db = dynamodb.New(sess)
 	}
 	return db
+}
+
+type ItemPayload struct {
+	ID    string      `json:"root_obj_id,omitempty"`
+	SubId string      `json:"sub_obj_id"`
+	Data  interface{} `json:"data,omitempty"`
 }
 
 type User struct {
@@ -62,20 +73,18 @@ type UserCreated struct {
 	UpdatedAt int64  `json:"updatedAt,omitempty"`
 }
 
-func CreateUser(userPayload UserPayload) (*UserCreated, error) {
+func UpdateItem(rootObjId string, subObjId string, Data interface{}) error {
 	db := GetDB()
-	user := User{
-		ID:        "org#default",
-		Email:     "user#" + userPayload.Email,
-		Password:  userPayload.Password,
-		UpdatedAt: time.Now().UnixNano(),
-		Data:      userPayload.Data,
+	newItem := ItemPayload{
+		ID:    rootObjId,
+		SubId: subObjId,
+		Data:  Data,
 	}
-	item, err := dynamodbattribute.MarshalMap(user)
+	item, err := dynamodbattribute.MarshalMap(newItem)
 	if err != nil {
 		log.Println(err)
 		errors.New("error when try to convert user data to dynamodbattribute")
-		return nil, err
+		return err
 	}
 	params := &dynamodb.PutItemInput{
 		Item:      item,
@@ -83,14 +92,10 @@ func CreateUser(userPayload UserPayload) (*UserCreated, error) {
 	}
 	if _, err := db.PutItem(params); err != nil {
 		log.Println(err)
-		return nil, errors.New("error when try to save data to database")
+		return errors.New("error when try to save data to database")
 	}
-	userCreated := UserCreated{
-		ID:        user.ID,
-		Email:     user.Email,
-		UpdatedAt: user.UpdatedAt,
-	}
-	return &userCreated, nil
+
+	return nil
 }
 
 func GetItem(rootObjId string, subObjId string) (map[string]interface{}, error) {
@@ -145,4 +150,35 @@ func DeleteItem(rootObjId string, subObjId string) error {
 	}
 
 	return nil
+}
+
+func CreateUser(userPayload UserPayload) (*UserCreated, error) {
+	db := GetDB()
+	user := User{
+		ID:        "org#default",
+		Email:     "user#" + userPayload.Email,
+		Password:  userPayload.Password,
+		UpdatedAt: time.Now().UnixNano(),
+		Data:      userPayload.Data,
+	}
+	item, err := dynamodbattribute.MarshalMap(user)
+	if err != nil {
+		log.Println(err)
+		errors.New("error when try to convert user data to dynamodbattribute")
+		return nil, err
+	}
+	params := &dynamodb.PutItemInput{
+		Item:      item,
+		TableName: aws.String(usersTable),
+	}
+	if _, err := db.PutItem(params); err != nil {
+		log.Println(err)
+		return nil, errors.New("error when try to save data to database")
+	}
+	userCreated := UserCreated{
+		ID:        user.ID,
+		Email:     user.Email,
+		UpdatedAt: user.UpdatedAt,
+	}
+	return &userCreated, nil
 }
