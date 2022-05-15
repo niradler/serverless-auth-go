@@ -65,7 +65,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		},
 	})
 
-	usersTable.GrantWriteData(authFunc)
+	usersTable.GrantReadWriteData(authFunc)
 
 	return stack
 }
