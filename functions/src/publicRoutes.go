@@ -34,7 +34,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 				log.Println(user)
 				check, _ := VerifyPassword(body.Password, user["password"].(string))
 				if check {
-					token, refreshToken, _ := GenerateToken(body.Email)
+					token, refreshToken, _ := GenerateToken(user)
 					context.JSON(http.StatusOK, gin.H{
 						"token":         token,
 						"refresh_token": refreshToken,

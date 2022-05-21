@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -21,15 +22,21 @@ func getSecretKey() string {
 }
 
 type SignedDetails struct {
-	Email string
+	Email string      `json:"email,omitempty"`
+	Org   string      `json:"org,omitempty"`
+	Data  interface{} `json:"data,omitempty"`
 	jwt.StandardClaims
 }
 
 var SECRET_KEY string = getSecretKey()
 
-func GenerateToken(email string) (signedToken string, signedRefreshToken string, err error) {
+func GenerateToken(user map[string]interface{}) (signedToken string, signedRefreshToken string, err error) {
+	rootObjId := strings.Split(user["root_obj_id"].(string), "#")
+	subObjId := strings.Split(user["sub_obj_id"].(string), "#")
 	claims := &SignedDetails{
-		Email: email,
+		Org:   rootObjId[1],
+		Email: subObjId[1],
+		Data:  user["data"],
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
 		},

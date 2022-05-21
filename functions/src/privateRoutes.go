@@ -8,7 +8,7 @@ import (
 
 func LoadPrivateRoutes(router *gin.RouterGroup) {
 
-	private := router.Group("/user")
+	private := router.Group("/users")
 	{
 		private.GET("/me", func(context *gin.Context) {
 			claims, validate := ValidateTokenMiddleware(context)

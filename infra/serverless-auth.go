@@ -26,7 +26,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 	authFunc := awslambda.NewFunction(stack, jsii.String("API-public-handler"), &awslambda.FunctionProps{
 		FunctionName: jsii.String(*stack.StackName() + "-auth-api"),
 		Runtime:      awslambda.Runtime_GO_1_X(),
-		MemorySize:   jsii.Number(128),
+		MemorySize:   jsii.Number(512),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build"), nil),
 		Handler:      jsii.String("main"),
