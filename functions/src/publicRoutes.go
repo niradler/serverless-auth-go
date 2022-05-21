@@ -26,7 +26,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 					})
 				return
 			}
-			user, err := GetItem("org#default", "user#"+body.Email)
+			user, err := GetItem("user#"+body.Email, "user#"+body.Email)
 			if err != nil {
 				log.Println(err)
 			}
@@ -68,7 +68,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 					})
 				return
 			}
-			user, _ := GetItem("org#default", "user#"+body.Email)
+			user, _ := GetItem("user#"+body.Email, "user#"+body.Email)
 			if user != nil {
 				log.Println("Already exists")
 				context.AbortWithStatusJSON(http.StatusBadRequest,

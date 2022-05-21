@@ -47,40 +47,10 @@ func GetDB() *dynamodb.DynamoDB {
 	return db
 }
 
-type ItemPayload struct {
-	ID    string      `json:"root_obj_id,omitempty"`
-	SubId string      `json:"sub_obj_id"`
-	Data  interface{} `json:"data,omitempty"`
-}
-
-type User struct {
-	ID        string      `json:"root_obj_id,omitempty"`
-	Email     string      `json:"sub_obj_id"`
-	Password  string      `json:"password"`
-	UpdatedAt int64       `json:"updatedAt,omitempty"`
-	Data      interface{} `json:"data,omitempty"`
-}
-
-type UserPayload struct {
-	Email    string
-	Password string
-	Data     interface{}
-}
-
-type UserCreated struct {
-	ID        string `json:"id,omitempty"`
-	Email     string `json:"email"`
-	UpdatedAt int64  `json:"updatedAt,omitempty"`
-}
-
-func UpdateItem(rootObjId string, subObjId string, Data interface{}) error {
+func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
 	db := GetDB()
-	newItem := ItemPayload{
-		ID:    rootObjId,
-		SubId: subObjId,
-		Data:  Data,
-	}
-	item, err := dynamodbattribute.MarshalMap(newItem)
+
+	item, err := dynamodbattribute.MarshalMap(payload)
 	if err != nil {
 		log.Println(err)
 		errors.New("error when try to convert user data to dynamodbattribute")
@@ -94,19 +64,18 @@ func UpdateItem(rootObjId string, subObjId string, Data interface{}) error {
 		log.Println(err)
 		return errors.New("error when try to save data to database")
 	}
-
 	return nil
 }
 
-func GetItem(rootObjId string, subObjId string) (map[string]interface{}, error) {
+func GetItem(pk string, sk string) (map[string]interface{}, error) {
 	db := GetDB()
 	params := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"root_obj_id": {
-				S: aws.String(rootObjId),
+			"pk": {
+				S: aws.String(pk),
 			},
-			"sub_obj_id": {
-				S: aws.String(subObjId),
+			"sk": {
+				S: aws.String(sk),
 			},
 		},
 		TableName: aws.String(usersTable),
@@ -130,15 +99,15 @@ func GetItem(rootObjId string, subObjId string) (map[string]interface{}, error) 
 	return nil, nil
 }
 
-func DeleteItem(rootObjId string, subObjId string) error {
+func DeleteItem(pk string, sk string) error {
 	db := GetDB()
 	params := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"root_obj_id": {
-				S: aws.String(rootObjId),
+			"pk": {
+				S: aws.String(pk),
 			},
-			"sub_obj_id": {
-				S: aws.String(subObjId),
+			"sk": {
+				S: aws.String(sk),
 			},
 		},
 		TableName: aws.String(usersTable),
@@ -153,32 +122,40 @@ func DeleteItem(rootObjId string, subObjId string) error {
 }
 
 func CreateUser(userPayload UserPayload) (*UserCreated, error) {
-	db := GetDB()
+	// db := GetDB()
 	user := User{
-		ID:        "org#default",
-		Email:     "user#" + userPayload.Email,
+		PK:        "user#" + userPayload.Email,
+		SK:        "user#" + userPayload.Email,	
+		Email:     userPayload.Email,
 		Password:  userPayload.Password,
-		UpdatedAt: time.Now().UnixNano(),
+		CreatedAt: time.Now().UnixNano(),
 		Data:      userPayload.Data,
 	}
-	item, err := dynamodbattribute.MarshalMap(user)
+
+	err := CreateItem(user)
 	if err != nil {
 		log.Println(err)
-		errors.New("error when try to convert user data to dynamodbattribute")
+		errors.New("error when try to save data to database")
 		return nil, err
 	}
-	params := &dynamodb.PutItemInput{
-		Item:      item,
-		TableName: aws.String(usersTable),
-	}
-	if _, err := db.PutItem(params); err != nil {
-		log.Println(err)
-		return nil, errors.New("error when try to save data to database")
-	}
+
+	// item, err := dynamodbattribute.MarshalMap(user)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	errors.New("error when try to convert user data to dynamodbattribute")
+	// 	return nil, err
+	// }
+	// params := &dynamodb.PutItemInput{
+	// 	Item:      item,
+	// 	TableName: aws.String(usersTable),
+	// }
+	// if _, err := db.PutItem(params); err != nil {
+	// 	log.Println(err)
+	// 	return nil, errors.New("error when try to save data to database")
+	// }
 	userCreated := UserCreated{
-		ID:        user.ID,
 		Email:     user.Email,
-		UpdatedAt: user.UpdatedAt,
+		CreatedAt: user.CreatedAt,
 	}
 	return &userCreated, nil
 }

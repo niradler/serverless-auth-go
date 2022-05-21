@@ -56,11 +56,11 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		BillingMode:   awsdynamodb.BillingMode_PAY_PER_REQUEST,
 		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 		PartitionKey: &awsdynamodb.Attribute{
-			Name: jsii.String("root_obj_id"),
+			Name: jsii.String("pk"),
 			Type: awsdynamodb.AttributeType_STRING,
 		},
 		SortKey: &awsdynamodb.Attribute{
-			Name: jsii.String("sub_obj_id"),
+			Name: jsii.String("sk"),
 			Type: awsdynamodb.AttributeType_STRING,
 		},
 	})
