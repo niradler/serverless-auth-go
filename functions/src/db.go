@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
 // var userTable = os.Getenv("USERS_TABLE")
@@ -99,6 +100,47 @@ func GetItem(pk string, sk string) (map[string]interface{}, error) {
 	return nil, nil
 }
 
+func GetItemByPK(pk string) ([]map[string]*dynamodb.AttributeValue, error) {
+	db := GetDB()
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(expression.Key("pk").Equal(expression.Value(pk))).
+		Build()
+	result, err := db.Query(&dynamodb.QueryInput{
+		TableName:                 aws.String(usersTable),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+	})
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return result.Items, nil
+}
+
+// func GetUserContext(email string) (interface{}, error) {
+// 	result, err := GetItemByPK(email)
+// 	var user map[string]interface{}
+// 	for _, i := range result.Items {
+// 		var item interface{}
+// 		err = dynamodbattribute.UnmarshalMap(i, &item)
+// 		if err == nil {
+// 			itemData := item.(map[string]interface{})
+// 			sk := strings.Split(itemData["sk"].(string), "#")
+
+// 			switch sk[0] {
+// 			case "org":
+// 				log.Println("org")
+// 			case "user":
+// 				user =
+// 			}
+// 		}
+
+// 	}
+
+// 	return "test", nil
+// }
 func DeleteItem(pk string, sk string) error {
 	db := GetDB()
 	params := &dynamodb.DeleteItemInput{
@@ -125,7 +167,7 @@ func CreateUser(userPayload UserPayload) (*UserCreated, error) {
 	// db := GetDB()
 	user := User{
 		PK:        "user#" + userPayload.Email,
-		SK:        "user#" + userPayload.Email,	
+		SK:        "user#" + userPayload.Email,
 		Email:     userPayload.Email,
 		Password:  userPayload.Password,
 		CreatedAt: time.Now().UnixNano(),
@@ -135,7 +177,7 @@ func CreateUser(userPayload UserPayload) (*UserCreated, error) {
 	err := CreateItem(user)
 	if err != nil {
 		log.Println(err)
-		errors.New("error when try to save data to database")
+		errors.New("CreateItem - user - " + err.Error())
 		return nil, err
 	}
 

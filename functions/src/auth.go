@@ -110,7 +110,7 @@ func ValidateTokenMiddleware(c *gin.Context) (claims *SignedDetails, validate bo
 	validate = false
 	clientToken := c.Request.Header.Get("Authorization")
 	if clientToken == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("No Authorization header provided")})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No Authorization header provided"})
 		c.Abort()
 		return
 	}
@@ -126,7 +126,7 @@ func ValidateTokenMiddleware(c *gin.Context) (claims *SignedDetails, validate bo
 }
 
 // Auth validates token and authorizes users
-func Authentication() gin.HandlerFunc {
+func AuthenticationMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		clientToken := c.Request.Header.Get("Authorization")
 		if clientToken == "" {
@@ -137,7 +137,7 @@ func Authentication() gin.HandlerFunc {
 
 		claims, err := ValidateToken(clientToken)
 		if err != "" {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			c.JSON(http.StatusForbidden, gin.H{"error": err})
 			c.Abort()
 			return
 		}

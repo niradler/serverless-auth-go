@@ -12,14 +12,15 @@ type User struct {
 type Org struct {
 	PK        string `json:"pk,omitempty"`
 	SK        string `json:"sk,omitempty"`
-	name      string `json:"name,omitempty"`
+	Name      string `json:"name,omitempty"`
+	CreatedBy string `json:"createdBy,omitempty"`
 	CreatedAt int64  `json:"createdAt,omitempty"`
 }
 
 type OrgUser struct {
 	PK        string `json:"pk,omitempty"`
 	SK        string `json:"sk,omitempty"`
-	role      string `json:"role,omitempty"`
+	Role      string `json:"role,omitempty"`
 	CreatedAt int64  `json:"createdAt,omitempty"`
 }
 
