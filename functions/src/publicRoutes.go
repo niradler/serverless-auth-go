@@ -22,15 +22,20 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			user, err := GetItem(toKey("user",body.Email) , toKey("user",body.Email))
-			if err != nil {
-				log.Println(err)
+			user, err := GetItem(toKey("user", body.Email), toKey("user", body.Email))
+
+			if handlerError(context, err, http.StatusBadRequest) {
+				return
 			}
 			if user != nil {
 				log.Println(user)
 				check, _ := VerifyPassword(body.Password, user["password"].(string))
 				if check {
-					token, refreshToken, _ := GenerateToken(user)
+					userContext, err := GetUserContext(user["email"].(string))
+					if handlerError(context, err, http.StatusBadRequest) {
+						return
+					}
+					token, refreshToken, _ := GenerateToken(*userContext)
 					context.JSON(http.StatusOK, gin.H{
 						"token":         token,
 						"refresh_token": refreshToken,
@@ -39,12 +44,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 					return
 				}
 			}
-
-			context.AbortWithStatusJSON(http.StatusBadRequest,
-				gin.H{
-					"error":   "ValidationError",
-					"message": "Failed to validate",
-				})
+			handlerError(context, errors.New("Failed to validate"), http.StatusForbidden)
 		})
 
 		public.POST("/signup", func(context *gin.Context) {
@@ -58,7 +58,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			user, _ := GetItem(toKey("user",body.Email), toKey("user",body.Email))
+			user, _ := GetItem(toKey("user", body.Email), toKey("user", body.Email))
 			if user != nil {
 				if handlerError(context, errors.New("Already exists"), http.StatusBadRequest) {
 					return

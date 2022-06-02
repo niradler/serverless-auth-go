@@ -15,12 +15,11 @@ func LoadPrivateRoutes(router *gin.RouterGroup) {
 	usersRouter.Use(AuthenticationMiddleware())
 	{
 		usersRouter.GET("/me", func(context *gin.Context) {
-			userContext, err := GetUserContext(context.GetString("email"))
-			if handlerError(context, err, http.StatusNotFound) {
-				return
-			}
 			context.JSON(http.StatusOK, gin.H{
-				"context": userContext,
+				"email": context.GetString("email"),
+				"id":    context.GetString("id"),
+				"data":  context.GetString("data"),
+				"orgs":  context.GetString("orgs"),
 			})
 		})
 	}

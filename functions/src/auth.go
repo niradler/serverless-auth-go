@@ -21,17 +21,21 @@ func getSecretKey() string {
 }
 
 type SignedDetails struct {
-	Email string      `json:"email,omitempty"`
-	Data  interface{} `json:"data,omitempty"`
+	Id    string       `json:"id,omitempty"`
+	Email string       `json:"email,omitempty"`
+	Data  interface{}  `json:"data,omitempty"`
+	Orgs  []OrgContext `json:"orgs,omitempty"`
 	jwt.StandardClaims
 }
 
 var SECRET_KEY string = getSecretKey()
 
-func GenerateToken(user map[string]interface{}) (signedToken string, signedRefreshToken string, err error) {
+func GenerateToken(userContext UserContext) (signedToken string, signedRefreshToken string, err error) {
 	claims := &SignedDetails{
-		Email: user["email"].(string),
-		Data:  user["data"],
+		Id:    userContext.Id,
+		Email: userContext.Email,
+		Data:  userContext.Data,
+		Orgs:  userContext.Orgs,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
 		},
@@ -142,7 +146,12 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		log.Println(claims)
+
 		c.Set("email", claims.Email)
+		c.Set("id", claims.Id)
+		c.Set("data", claims.Data)
+		c.Set("data", claims.Orgs)
 
 		c.Next()
 
