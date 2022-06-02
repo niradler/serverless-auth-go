@@ -34,3 +34,15 @@ type UserCreated struct {
 	Email     string `json:"email,omitempty"`
 	CreatedAt int64  `json:"updatedAt,omitempty"`
 }
+
+type OrgContext struct {
+	Id   string `json:"id,omitempty"`
+	Name string `json:"Name,omitempty"`
+	Role string `json:"role,omitempty"`
+}
+type UserContext struct {
+	Id    string       `json:"id,omitempty"`
+	Email string       `json:"email,omitempty"`
+	Orgs  []OrgContext `json:"orgs,omitempty"`
+	Data  interface{}  `json:"data,omitempty"`
+}

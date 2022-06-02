@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -18,15 +19,10 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			}
 			body := Body{}
 			err := context.ShouldBindJSON(&body)
-			if err != nil {
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "ValidationError",
-						"message": err.Error(),
-					})
+			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			user, err := GetItem("user#"+body.Email, "user#"+body.Email)
+			user, err := GetItem(toKey("user",body.Email) , toKey("user",body.Email))
 			if err != nil {
 				log.Println(err)
 			}
@@ -59,24 +55,14 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			}
 			body := Body{}
 			err := context.ShouldBindJSON(&body)
-			if err != nil {
-				log.Println(err)
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "ValidationError",
-						"message": err.Error(),
-					})
+			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			user, _ := GetItem("user#"+body.Email, "user#"+body.Email)
+			user, _ := GetItem(toKey("user",body.Email), toKey("user",body.Email))
 			if user != nil {
-				log.Println("Already exists")
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "ValidationError",
-						"message": "Already exists",
-					})
-				return
+				if handlerError(context, errors.New("Already exists"), http.StatusBadRequest) {
+					return
+				}
 			}
 			password := HashPassword(body.Password)
 			_, err = CreateUser(UserPayload{
@@ -84,12 +70,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 				Password: password,
 				Data:     body.Data,
 			})
-			if err != nil {
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "ValidationError",
-						"message": err.Error(),
-					})
+			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
 			context.JSON(http.StatusOK, gin.H{

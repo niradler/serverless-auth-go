@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"errors"
 	"net/http"
 	"time"
 
@@ -15,19 +15,12 @@ func LoadPrivateRoutes(router *gin.RouterGroup) {
 	usersRouter.Use(AuthenticationMiddleware())
 	{
 		usersRouter.GET("/me", func(context *gin.Context) {
-			log.Println(context.GetString("email"))
-			userData, _ := GetItemByPK("user#" + context.GetString("email"))
-			if userData == nil {
-				log.Println(userData)
-				context.AbortWithStatusJSON(http.StatusNotFound,
-					gin.H{
-						"error":   "Error",
-						"message": "Not found",
-					})
+			userContext, err := GetUserContext(context.GetString("email"))
+			if handlerError(context, err, http.StatusNotFound) {
 				return
 			}
 			context.JSON(http.StatusOK, gin.H{
-				"data": userData,
+				"context": userContext,
 			})
 		})
 	}
@@ -42,25 +35,17 @@ func LoadPrivateRoutes(router *gin.RouterGroup) {
 			}
 			body := Body{}
 			err := context.ShouldBindJSON(&body)
-			if err != nil {
-				log.Println(err.Error())
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "ValidationError",
-						"message": err.Error(),
-					})
+
+			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
+
 			orgName := body.Name
 			existingOrg, _ := GetItem("org#"+orgName, "org#"+orgName)
 			if existingOrg != nil {
-				log.Println("Already exists")
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "ValidationError",
-						"message": "Already exists",
-					})
-				return
+				if handlerError(context, errors.New("Already exists"), http.StatusBadRequest) {
+					return
+				}
 			}
 			org := Org{
 				PK:        "org#" + orgName,
@@ -71,13 +56,7 @@ func LoadPrivateRoutes(router *gin.RouterGroup) {
 			}
 
 			err = CreateItem(org)
-			if err != nil {
-				log.Println(err)
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "CreateError",
-						"message": "Failed to create org",
-					})
+			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
 			orgUser := OrgUser{
@@ -88,13 +67,7 @@ func LoadPrivateRoutes(router *gin.RouterGroup) {
 			}
 
 			err = CreateItem(orgUser)
-			if err != nil {
-				log.Println(err)
-				context.AbortWithStatusJSON(http.StatusBadRequest,
-					gin.H{
-						"error":   "CreateError",
-						"message": "Failed to create role",
-					})
+			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
 			context.JSON(http.StatusOK, gin.H{

@@ -20,6 +20,19 @@ func Handler(
 	return ginLambda.ProxyWithContext(ctx, req)
 }
 
+func handlerError(context *gin.Context, err error, status int) bool {
+	if err != nil {
+		log.Println(err.Error())
+		context.AbortWithStatusJSON(status,
+			gin.H{
+				"error":   "Error",
+				"message": err.Error(),
+			})
+		return true
+	}
+	return false
+}
+
 func main() {
 	log.Printf("Gin cold start")
 	router := gin.Default()

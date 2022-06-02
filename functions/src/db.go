@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -24,7 +24,6 @@ func Init() {
 		Credentials: credentials.NewSharedCredentials("", "default"),
 	})
 	if err != nil {
-		log.Println(err)
 		return
 	}
 	db = dynamodb.New(sess)
@@ -41,11 +40,19 @@ func GetDB() *dynamodb.DynamoDB {
 			Credentials: credentials,
 		})
 		if err != nil {
-			log.Println(err)
 		}
 		db = dynamodb.New(sess)
 	}
 	return db
+}
+
+func toKey(key string, id string) string {
+	return key + "#" + id
+}
+
+func fromKey(keyString string) (string, string) {
+	obj := strings.Split(keyString, "#")
+	return obj[0], obj[1]
 }
 
 func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
@@ -53,7 +60,6 @@ func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
 
 	item, err := dynamodbattribute.MarshalMap(payload)
 	if err != nil {
-		log.Println(err)
 		errors.New("error when try to convert user data to dynamodbattribute")
 		return err
 	}
@@ -62,7 +68,6 @@ func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
 		TableName: aws.String(usersTable),
 	}
 	if _, err := db.PutItem(params); err != nil {
-		log.Println(err)
 		return errors.New("error when try to save data to database")
 	}
 	return nil
@@ -83,12 +88,10 @@ func GetItem(pk string, sk string) (map[string]interface{}, error) {
 	}
 	resp, err := db.GetItem(params)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	var item interface{}
 	if err := dynamodbattribute.UnmarshalMap(resp.Item, &item); err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	if item != nil {
@@ -100,10 +103,10 @@ func GetItem(pk string, sk string) (map[string]interface{}, error) {
 	return nil, nil
 }
 
-func GetItemByPK(pk string) ([]map[string]*dynamodb.AttributeValue, error) {
+func GetItemByPK(key string) ([]interface{}, error) {
 	db := GetDB()
 	expr, err := expression.NewBuilder().
-		WithKeyCondition(expression.Key("pk").Equal(expression.Value(pk))).
+		WithKeyCondition(expression.Key("pk").Equal(expression.Value(key))).
 		Build()
 	result, err := db.Query(&dynamodb.QueryInput{
 		TableName:                 aws.String(usersTable),
@@ -111,36 +114,61 @@ func GetItemByPK(pk string) ([]map[string]*dynamodb.AttributeValue, error) {
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
 	})
+
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
-	return result.Items, nil
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+
+	var items interface{}
+	if err := dynamodbattribute.UnmarshalListOfMaps(result.Items, &items); err != nil {
+		return nil, err
+	}
+	if items != nil {
+		value := items.([]interface{})
+
+		return value, nil
+	}
+	return nil, nil
 }
 
-// func GetUserContext(email string) (interface{}, error) {
-// 	result, err := GetItemByPK(email)
-// 	var user map[string]interface{}
-// 	for _, i := range result.Items {
-// 		var item interface{}
-// 		err = dynamodbattribute.UnmarshalMap(i, &item)
-// 		if err == nil {
-// 			itemData := item.(map[string]interface{})
-// 			sk := strings.Split(itemData["sk"].(string), "#")
+func GetUserContext(email string) (*UserContext, error) {
+	items, _ := GetItemByPK(toKey("user", email))
+	if items == nil {
+		return nil, errors.New("user not found")
+	}
+	var user UserContext
+	var orgs []OrgContext
+	for _, i := range items {
+		obj := i.(map[string]interface{})
+		_, pkId := fromKey(obj["pk"].(string))
+		sk, skId := fromKey(obj["sk"].(string))
+		switch sk {
+		case "org":
+			orgs = append(orgs, OrgContext{
+				Id:   skId,
+				Name: skId,
+				Role: obj["role"].(string),
+			})
+		case "user":
+			user = UserContext{
+				Id:    pkId,
+				Email: obj["email"].(string),
+				Data:  obj["data"].(interface{}),
+			}
 
-// 			switch sk[0] {
-// 			case "org":
-// 				log.Println("org")
-// 			case "user":
-// 				user =
-// 			}
-// 		}
-
-// 	}
-
-// 	return "test", nil
-// }
+		}
+	}
+	return &UserContext{
+		Id:    user.Id,
+		Email: user.Email,
+		Data:  user.Data,
+		Orgs:  orgs,
+	}, nil
+}
 func DeleteItem(pk string, sk string) error {
 	db := GetDB()
 	params := &dynamodb.DeleteItemInput{
@@ -156,7 +184,6 @@ func DeleteItem(pk string, sk string) error {
 	}
 	_, err := db.DeleteItem(params)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
@@ -176,7 +203,6 @@ func CreateUser(userPayload UserPayload) (*UserCreated, error) {
 
 	err := CreateItem(user)
 	if err != nil {
-		log.Println(err)
 		errors.New("CreateItem - user - " + err.Error())
 		return nil, err
 	}
