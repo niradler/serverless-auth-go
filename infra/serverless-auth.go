@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
@@ -20,8 +22,6 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		sprops = props.StackProps
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
-
-	// The code that defines your stack goes here
 
 	authFunc := awslambda.NewFunction(stack, jsii.String("API-public-handler"), &awslambda.FunctionProps{
 		FunctionName: jsii.String(*stack.StackName() + "-auth-api"),
@@ -72,8 +72,11 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 
 func main() {
 	app := awscdk.NewApp(nil)
-
-	NewServerlessAuthStack(app, "ServerlessAuthStack", &ServerlessAuthStackProps{
+	appName := os.Getenv("APP_NAME")
+	if appName == "" {
+		appName = "ServerlessAuthStack"
+	}
+	NewServerlessAuthStack(app, appName, &ServerlessAuthStackProps{
 		awscdk.StackProps{
 			Env: env(),
 		},
