@@ -148,8 +148,6 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// dump(claims)
-
 		c.Set("email", claims.Email)
 		c.Set("id", claims.Id)
 		c.Set("data", claims.Data)
