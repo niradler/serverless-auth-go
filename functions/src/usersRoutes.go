@@ -12,19 +12,6 @@ func LoadUsersRoutes(router *gin.RouterGroup) {
 
 	usersRouter.Use(AuthenticationMiddleware())
 	{
-		usersRouter.GET("/validate", func(context *gin.Context) {
-
-			orgs, _ := context.Get("orgs")
-			data, _ := context.Get("data")
-
-			context.JSON(http.StatusOK, gin.H{
-				"email": context.GetString("email"),
-				"id":    context.GetString("id"),
-				"data":  data,
-				"orgs":  orgs,
-			})
-		})
-
 		usersRouter.GET("/me", func(context *gin.Context) {
 			userContext, err := GetUserContext(context.GetString("email"))
 			if handlerError(context, err, http.StatusBadRequest) {
@@ -42,7 +29,6 @@ func LoadUsersRoutes(router *gin.RouterGroup) {
 			if handlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-
 			err = UpdateUser(context.GetString("id"), body.Data)
 			if handlerError(context, err, http.StatusBadRequest) {
 				return

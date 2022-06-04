@@ -82,13 +82,13 @@ func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
 func UpdateUser(id string, data interface{}) error {
 	db := GetDB()
 	pk := generateKey("user", id)
-	item, _ := dynamodbattribute.MarshalMap(data)
+	upd := expression.
+		Set(expression.Name("data"), expression.Value(data))
+	expr, err := expression.NewBuilder().WithUpdate(upd).Build()
+	if err != nil {
+		return err
+	}
 	params := &dynamodb.UpdateItemInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":data": {
-				M: item,
-			},
-		},
 		TableName: aws.String(usersTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"pk": {
@@ -98,7 +98,9 @@ func UpdateUser(id string, data interface{}) error {
 				S: aws.String(pk),
 			},
 		},
-		UpdateExpression: aws.String("set data = :data"),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		UpdateExpression:          expr.Update(),
 	}
 	if _, err := db.UpdateItem(params); err != nil {
 		dump(err)
@@ -202,6 +204,7 @@ func GetUserContext(email string) (*UserContext, error) {
 		Orgs:  orgs,
 	}, nil
 }
+
 func DeleteItem(pk string, sk string) error {
 	db := GetDB()
 	params := &dynamodb.DeleteItemInput{

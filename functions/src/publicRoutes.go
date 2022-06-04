@@ -10,9 +10,9 @@ import (
 
 func LoadPublicRoutes(router *gin.RouterGroup) {
 
-	public := router.Group("/auth")
+	auth := router.Group("/auth")
 	{
-		public.POST("/login", func(context *gin.Context) {
+		auth.POST("/login", func(context *gin.Context) {
 			type Body struct {
 				Email    string `json:"email" binding:"required"`
 				Password string `json:"password" binding:"required"`
@@ -47,7 +47,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			handlerError(context, errors.New("Failed to validate"), http.StatusForbidden)
 		})
 
-		public.POST("/signup", func(context *gin.Context) {
+		auth.POST("/signup", func(context *gin.Context) {
 			type Body struct {
 				Email    string      `json:"email" binding:"required"`
 				Password string      `json:"password" binding:"required"`
@@ -77,6 +77,32 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 				"message": "Signup success",
 				"email":   body.Email,
 			})
+		})
+
+		auth.GET("/validate", func(context *gin.Context) {
+			claims, valid := ValidateTokenMiddleware(context)
+			if valid == false {
+				handlerError(context, errors.New("Unauthorized"), http.StatusForbidden)
+				return
+			}
+			context.JSON(http.StatusOK, claims)
+		})
+
+		auth.POST("/renew", func(context *gin.Context) {
+			claims, valid := ValidateTokenMiddleware(context)
+			if valid == false {
+				handlerError(context, errors.New("Unauthorized"), http.StatusForbidden)
+				return
+			}
+			userContext, err := GetUserContext(claims.Email)
+			if handlerError(context, err, http.StatusBadRequest) {
+				return
+			}
+			token, _, _ := GenerateToken(*userContext)
+			context.JSON(http.StatusOK, gin.H{
+				"token": token,
+			})
+			return
 		})
 	}
 }

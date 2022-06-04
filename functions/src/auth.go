@@ -42,6 +42,7 @@ func GenerateToken(userContext UserContext) (signedToken string, signedRefreshTo
 	}
 
 	refreshClaims := &SignedDetails{
+		Email: userContext.Email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(168)).Unix(),
 		},
@@ -110,8 +111,8 @@ func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
 	return claims, msg
 }
 
-func ValidateTokenMiddleware(c *gin.Context) (claims *SignedDetails, validate bool) {
-	validate = false
+func ValidateTokenMiddleware(c *gin.Context) (claims *SignedDetails, valid bool) {
+	valid = false
 	clientToken := c.Request.Header.Get("Authorization")
 	if clientToken == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "No Authorization header provided"})
@@ -125,8 +126,8 @@ func ValidateTokenMiddleware(c *gin.Context) (claims *SignedDetails, validate bo
 		c.Abort()
 		return
 	}
-	validate = true
-	return claims, validate
+	valid = true
+	return claims, valid
 }
 
 // Auth validates token and authorizes users
