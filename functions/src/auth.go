@@ -101,11 +101,11 @@ func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
 		return
 	}
 
-	// if claims.ExpiresAt < time.Now().Local().Unix() {
-	// 	msg = fmt.Sprintf("token is expired")
-	// 	msg = err.Error()
-	// 	return
-	// }
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		msg = fmt.Sprintf("token is expired")
+		msg = err.Error()
+		return
+	}
 
 	return claims, msg
 }
@@ -146,12 +146,12 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		log.Println(claims)
+		// dump(claims)
 
 		c.Set("email", claims.Email)
 		c.Set("id", claims.Id)
 		c.Set("data", claims.Data)
-		c.Set("data", claims.Orgs)
+		c.Set("orgs", claims.Orgs)
 
 		c.Next()
 

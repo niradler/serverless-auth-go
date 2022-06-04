@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 var ginLambda *ginadapter.GinLambda
@@ -22,7 +22,7 @@ func Handler(
 
 func handlerError(context *gin.Context, err error, status int) bool {
 	if err != nil {
-		log.Println(err.Error())
+		Logger.Info("handlerError", zap.Error(err))
 		context.AbortWithStatusJSON(status,
 			gin.H{
 				"error":   "Error",
@@ -34,11 +34,13 @@ func handlerError(context *gin.Context, err error, status int) bool {
 }
 
 func main() {
-	log.Printf("Gin cold start")
+	InitializeLogger()
+	Logger.Info("Gin cold start")
 	router := gin.Default()
 	router.Use(gin.Logger())
 	v1 := router.Group("/v1")
-	LoadPrivateRoutes(v1)
+	LoadUsersRoutes(v1)
+	LoadOrgsRoutes(v1)
 	LoadPublicRoutes(v1)
 
 	ginLambda = ginadapter.New(router)

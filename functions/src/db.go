@@ -46,8 +46,12 @@ func GetDB() *dynamodb.DynamoDB {
 	return db
 }
 
-func toKey(key string, id string) string {
+func generateKey(key string, id string) string {
 	return key + "#" + id
+}
+
+func toKey(key string, id string) string {
+	return generateKey(key, toHashId(id))
 }
 
 func fromKey(keyString string) (string, string) {
@@ -60,6 +64,7 @@ func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
 
 	item, err := dynamodbattribute.MarshalMap(payload)
 	if err != nil {
+		dump(err)
 		errors.New("error when try to convert user data to dynamodbattribute")
 		return err
 	}
@@ -68,6 +73,35 @@ func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
 		TableName: aws.String(usersTable),
 	}
 	if _, err := db.PutItem(params); err != nil {
+		dump(err)
+		return errors.New("error when try to save data to database")
+	}
+	return nil
+}
+
+func UpdateUser(id string, data interface{}) error {
+	db := GetDB()
+	pk := generateKey("user", id)
+	item, _ := dynamodbattribute.MarshalMap(data)
+	params := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":data": {
+				M: item,
+			},
+		},
+		TableName: aws.String(usersTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"pk": {
+				S: aws.String(pk),
+			},
+			"sk": {
+				S: aws.String(pk),
+			},
+		},
+		UpdateExpression: aws.String("set data = :data"),
+	}
+	if _, err := db.UpdateItem(params); err != nil {
+		dump(err)
 		return errors.New("error when try to save data to database")
 	}
 	return nil
@@ -150,7 +184,6 @@ func GetUserContext(email string) (*UserContext, error) {
 		case "org":
 			orgs = append(orgs, OrgContext{
 				Id:   skId,
-				Name: skId,
 				Role: obj["role"].(string),
 			})
 		case "user":
@@ -191,10 +224,10 @@ func DeleteItem(pk string, sk string) error {
 }
 
 func CreateUser(userPayload UserPayload) (*UserCreated, error) {
-	// db := GetDB()
+
 	user := User{
-		PK:        "user#" + userPayload.Email,
-		SK:        "user#" + userPayload.Email,
+		PK:        toKey("user", userPayload.Email),
+		SK:        toKey("user", userPayload.Email),
 		Email:     userPayload.Email,
 		Password:  userPayload.Password,
 		CreatedAt: time.Now().UnixNano(),
@@ -207,20 +240,6 @@ func CreateUser(userPayload UserPayload) (*UserCreated, error) {
 		return nil, err
 	}
 
-	// item, err := dynamodbattribute.MarshalMap(user)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	errors.New("error when try to convert user data to dynamodbattribute")
-	// 	return nil, err
-	// }
-	// params := &dynamodb.PutItemInput{
-	// 	Item:      item,
-	// 	TableName: aws.String(usersTable),
-	// }
-	// if _, err := db.PutItem(params); err != nil {
-	// 	log.Println(err)
-	// 	return nil, errors.New("error when try to save data to database")
-	// }
 	userCreated := UserCreated{
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,

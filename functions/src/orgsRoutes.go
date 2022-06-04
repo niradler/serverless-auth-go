@@ -8,21 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LoadPrivateRoutes(router *gin.RouterGroup) {
+func LoadOrgsRoutes(router *gin.RouterGroup) {
 
-	usersRouter := router.Group("/users")
-
-	usersRouter.Use(AuthenticationMiddleware())
-	{
-		usersRouter.GET("/me", func(context *gin.Context) {
-			context.JSON(http.StatusOK, gin.H{
-				"email": context.GetString("email"),
-				"id":    context.GetString("id"),
-				"data":  context.GetString("data"),
-				"orgs":  context.GetString("orgs"),
-			})
-		})
-	}
 	orgRouter := router.Group("/org")
 
 	orgRouter.Use(AuthenticationMiddleware())
@@ -40,17 +27,17 @@ func LoadPrivateRoutes(router *gin.RouterGroup) {
 			}
 
 			orgName := body.Name
-			existingOrg, _ := GetItem("org#"+orgName, "org#"+orgName)
+			existingOrg, _ := GetItem(toKey("org", orgName), toKey("org", orgName))
 			if existingOrg != nil {
 				if handlerError(context, errors.New("Already exists"), http.StatusBadRequest) {
 					return
 				}
 			}
 			org := Org{
-				PK:        "org#" + orgName,
-				SK:        "org#" + orgName,
+				PK:        toKey("org", orgName),
+				SK:        toKey("org", orgName),
 				Name:      orgName,
-				CreatedBy: context.GetString("email"),
+				CreatedBy: context.GetString("id"),
 				CreatedAt: time.Now().UnixNano(),
 			}
 
@@ -59,8 +46,8 @@ func LoadPrivateRoutes(router *gin.RouterGroup) {
 				return
 			}
 			orgUser := OrgUser{
-				PK:        "user#" + context.GetString("email"),
-				SK:        "org#" + orgName,
+				PK:        toKey("user", context.GetString("email")),
+				SK:        toKey("org", orgName),
 				Role:      "admin",
 				CreatedAt: time.Now().UnixNano(),
 			}

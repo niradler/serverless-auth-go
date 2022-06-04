@@ -37,7 +37,6 @@ type UserCreated struct {
 
 type OrgContext struct {
 	Id   string `json:"id,omitempty"`
-	Name string `json:"Name,omitempty"`
 	Role string `json:"role,omitempty"`
 }
 type UserContext struct {
