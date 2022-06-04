@@ -14,11 +14,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
-// var userTable = os.Getenv("USERS_TABLE")
-var usersTable = "ServerlessAuthStack-table"
+var usersTable = os.Getenv("USERS_TABLE")
 var db *dynamodb.DynamoDB
 
 func Init() {
+	if usersTable == "" {
+		usersTable = "ServerlessAuthStack-table"
+	}
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
 		Credentials: credentials.NewSharedCredentials("", "default"),

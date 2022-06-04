@@ -32,7 +32,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment: &map[string]*string{
-			"DYNAMODB_TABLE": jsii.String(*stack.StackName() + "-table"),
+			"USERS_TABLE": jsii.String(*stack.StackName() + "-table"),
 		},
 	})
 
