@@ -9,6 +9,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/thoas/go-funk"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -157,4 +158,17 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 		c.Next()
 
 	}
+}
+
+func roleCheck(ctx *gin.Context, orgId string, role string) bool {
+	orgs, _ := ctx.Get("orgs")
+
+	r := funk.Find(orgs.([]OrgContext), func(org OrgContext) bool {
+		return org.Id == orgId && org.Role == role
+	})
+
+	if r != nil {
+		return true
+	}
+	return false
 }

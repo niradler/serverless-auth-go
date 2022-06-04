@@ -10,7 +10,7 @@ import (
 
 func LoadOrgsRoutes(router *gin.RouterGroup) {
 
-	orgRouter := router.Group("/org")
+	orgRouter := router.Group("/orgs")
 
 	orgRouter.Use(AuthenticationMiddleware())
 	{
@@ -60,6 +60,36 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 				"message": "Org created",
 				"email":   orgName,
 			})
+		})
+
+		orgRouter.POST("/:orgId/invite", func(context *gin.Context) {
+			type Body struct {
+				Email string `json:"email" binding:"required"`
+				Role  string `json:"role" binding:"required"`
+			}
+			body := Body{}
+			err := context.ShouldBindJSON(&body)
+			if handlerError(context, err, http.StatusBadRequest) {
+				return
+			}
+			orgId := context.Param("orgId")
+			isValid := roleCheck(context, orgId, "admin")
+			if !isValid {
+				handlerError(context, errors.New("Forbidden"), http.StatusForbidden)
+				return
+			}
+			orgUser := OrgUser{
+				PK:        toKey("user", body.Email),
+				SK:        generateKey("org", orgId),
+				Role:      body.Role,
+				CreatedAt: time.Now().UnixNano(),
+			}
+
+			err = CreateItem(orgUser)
+			if handlerError(context, err, http.StatusBadRequest) {
+				return
+			}
+			context.JSON(http.StatusOK, "")
 		})
 	}
 
