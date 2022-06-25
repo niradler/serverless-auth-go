@@ -17,24 +17,15 @@ import (
 	"github.com/niradler/social-lab/src/utils"
 )
 
-var usersTable = os.Getenv("USERS_TABLE")
+var appTable = os.Getenv("AUTH_APP_TABLE")
 var db *dynamodb.DynamoDB
 
-func Init() {
-	if usersTable == "" {
-		usersTable = "ServerlessAuthStack-table"
-	}
-	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewSharedCredentials("", "default"),
-	})
-	if err != nil {
-		return
-	}
-	db = dynamodb.New(sess)
-}
-
 func GetDB() *dynamodb.DynamoDB {
+
+	if appTable == "" {
+		appTable = "ServerlessAuthStack-table"
+	}
+
 	if db == nil {
 		var credentials = credentials.NewSharedCredentials("", "default")
 		if os.Getenv("LAMBDA_TASK_ROOT") != "" {
@@ -75,8 +66,9 @@ func CreateItem[Payload types.User | types.Org | types.OrgUser](payload Payload)
 	}
 	params := &dynamodb.PutItemInput{
 		Item:      item,
-		TableName: aws.String(usersTable),
+		TableName: aws.String(appTable),
 	}
+	utils.Dump(params)
 	if _, err := db.PutItem(params); err != nil {
 		utils.Dump(err)
 		return errors.New("error when try to save data to database")
@@ -94,7 +86,7 @@ func UpdateUser(id string, data interface{}) error {
 		return err
 	}
 	params := &dynamodb.UpdateItemInput{
-		TableName: aws.String(usersTable),
+		TableName: aws.String(appTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"pk": {
 				S: aws.String(pk),
@@ -125,7 +117,7 @@ func GetItem(pk string, sk string) (map[string]interface{}, error) {
 				S: aws.String(sk),
 			},
 		},
-		TableName: aws.String(usersTable),
+		TableName: aws.String(appTable),
 	}
 	resp, err := db.GetItem(params)
 	if err != nil {
@@ -150,7 +142,7 @@ func GetItemByPK(key string) ([]interface{}, error) {
 		WithKeyCondition(expression.Key("pk").Equal(expression.Value(key))).
 		Build()
 	result, err := db.Query(&dynamodb.QueryInput{
-		TableName:                 aws.String(usersTable),
+		TableName:                 aws.String(appTable),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
@@ -221,7 +213,7 @@ func DeleteItem(pk string, sk string) error {
 				S: aws.String(sk),
 			},
 		},
-		TableName: aws.String(usersTable),
+		TableName: aws.String(appTable),
 	}
 	_, err := db.DeleteItem(params)
 	if err != nil {

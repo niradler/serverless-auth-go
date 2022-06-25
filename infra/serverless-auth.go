@@ -36,8 +36,8 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment: &map[string]*string{
-			"USERS_TABLE": jsii.String(*stack.StackName() + "-table"),
-			"JWT_SECRET":  jsii.String(jwtSecret),
+			"AUTH_APP_TABLE": jsii.String(*stack.StackName() + "-table"),
+			"JWT_SECRET":     jsii.String(jwtSecret),
 		},
 	})
 

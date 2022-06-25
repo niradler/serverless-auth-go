@@ -6,12 +6,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/bitbucket"
+	"github.com/markbates/goth/providers/facebook"
+	"github.com/markbates/goth/providers/github"
+	"github.com/markbates/goth/providers/gitlab"
 	"github.com/markbates/goth/providers/google"
 	"github.com/niradler/social-lab/src/db"
 	"github.com/niradler/social-lab/src/types"
@@ -194,26 +199,11 @@ func askResetPassword(email string) error {
 	return nil
 }
 
-func getProviderConfiguration() (string, string, string, string) {
+func getClientCallback() string {
 
 	err := godotenv.Load()
 	if err != nil {
 		utils.Logger.Error("Error loading .env file")
-	}
-
-	clientId := os.Getenv("GOOGLE_CLIENT_ID")
-	if clientId == "" {
-		clientId = "clientId"
-	}
-
-	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
-	if clientSecret == "" {
-		clientSecret = "clientSecret"
-	}
-
-	clientAuthCallback := os.Getenv("GOOGLE_CALLBACK")
-	if clientAuthCallback == "" {
-		clientAuthCallback = "GOOGLE_CALLBACK"
 	}
 
 	clientCallback := os.Getenv("CLIENT_CALLBACK")
@@ -221,19 +211,43 @@ func getProviderConfiguration() (string, string, string, string) {
 		clientCallback = "CLIENT_CALLBACK"
 	}
 
-	log.Println(clientId)
 	log.Println(clientCallback)
+
+	return clientCallback
+
+}
+
+func getProviderConfiguration(provider string) (string, string, string) {
+	providerUpperCase := strings.ToUpper(provider)
+
+	err := godotenv.Load()
+	if err != nil {
+		utils.Logger.Error("Error loading .env file")
+	}
+
+	clientId := os.Getenv(providerUpperCase + "_CLIENT_ID")
+	if clientId == "" {
+		clientId = "clientId"
+	}
+
+	clientSecret := os.Getenv(providerUpperCase + "_CLIENT_SECRET")
+	if clientSecret == "" {
+		clientSecret = "clientSecret"
+	}
+
+	clientAuthCallback := os.Getenv(providerUpperCase + "_CALLBACK")
+	if clientAuthCallback == "" {
+		clientAuthCallback = "clientAuthCallback"
+	}
+
+	log.Println(clientId)
 	log.Println(clientAuthCallback)
 
-	return clientCallback, clientId, clientSecret, clientAuthCallback
+	return clientId, clientSecret, clientAuthCallback
 
 }
 
 func ProvidersAuthCallback(provider string, ctx *gin.Context) {
-	clientCallback, clientId, clientSecret, clientAuthCallback := getProviderConfiguration()
-	goth.UseProviders(
-		google.New(clientId, clientSecret, clientAuthCallback, "email", "profile"),
-	)
 	q := ctx.Request.URL.Query()
 	q.Add("provider", provider)
 	ctx.Request.URL.RawQuery = q.Encode()
@@ -247,7 +261,7 @@ func ProvidersAuthCallback(provider string, ctx *gin.Context) {
 		_, err = db.CreateUser(types.UserPayload{
 			Email:    user.Email,
 			Password: "",
-			Data:     user.RawData,
+			Data:     user.RawData, // TODO: use goth user for persistance
 		})
 		if utils.HandlerError(ctx, err, http.StatusBadRequest) {
 			return
@@ -259,16 +273,11 @@ func ProvidersAuthCallback(provider string, ctx *gin.Context) {
 		return
 	}
 	token, refreshToken, _ := GenerateToken(*userContext)
-
+	clientCallback := getClientCallback()
 	ctx.Redirect(http.StatusMovedPermanently, clientCallback+"?token="+token+"&refreshToken="+refreshToken)
 }
 
 func ProvidersAuthBegin(provider string, ctx *gin.Context) {
-	_, clientId, clientSecret, clientAuthCallback := getProviderConfiguration()
-	goth.UseProviders(
-		google.New(clientId, clientSecret, clientAuthCallback, "email", "profile"),
-	)
-
 	q := ctx.Request.URL.Query()
 	q.Add("provider", provider)
 	ctx.Request.URL.RawQuery = q.Encode()
@@ -285,4 +294,20 @@ func GothInit() {
 	store.Options.Secure = isProd // Set to true when serving over https
 
 	gothic.Store = store
+	providers := []string{"facebook", "google", "github", "bitbucket", "gitlab"}
+	for _, provider := range providers {
+		clientId, clientSecret, clientAuthCallback := getProviderConfiguration(provider)
+		switch provider {
+		case "google":
+			goth.UseProviders(google.New(clientId, clientSecret, clientAuthCallback, "email", "profile"))
+		case "github":
+			goth.UseProviders(github.New(clientId, clientSecret, clientAuthCallback, "email", "profile"))
+		case "facebook":
+			goth.UseProviders(facebook.New(clientId, clientSecret, clientAuthCallback, "email", "profile"))
+		case "bitbucket":
+			goth.UseProviders(bitbucket.New(clientId, clientSecret, clientAuthCallback, "email", "profile"))
+		case "gitlab":
+			goth.UseProviders(gitlab.New(clientId, clientSecret, clientAuthCallback, "email", "profile"))
+		}
+	}
 }
