@@ -22,4 +22,4 @@ npm i -g aws-cdk
 # export SLS_AUTH_JWT_SECRET=
 
 # deploy
-cd functions && go get && go build -o build/main ./src && cd .. && cd infra && cdk deploy
+cd functions && go get && export GOOS='linux' && go build -o build/main ./src && cd .. && cd infra && cdk deploy

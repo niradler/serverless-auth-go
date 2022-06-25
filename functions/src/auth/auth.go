@@ -301,6 +301,7 @@ func GothInit() {
 	store.Options.Secure = isProd // Set to true when serving over https
 
 	gothic.Store = store
+
 	providers := []string{"facebook", "google", "github", "bitbucket", "gitlab"}
 	for _, provider := range providers {
 		clientId, clientSecret, clientAuthCallback := getProviderConfiguration(provider)

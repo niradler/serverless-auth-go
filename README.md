@@ -6,8 +6,13 @@ Provide simple authentication mechanism base on aws serverless services (Dynmodb
 
 - Using aws cdk (iac) to deploy the aws services. (golang)
 - Scalable api using Gin framework. (golang)
+- goth for providers logins. (github/bitbucket/gitlab/facebook/google) (only google is tested)
 
 ## Deploy
+
+use deploy.sh script to setup and customize the deployment
+
+## Develop
 
 ```sh
 npm i -g cdk
@@ -16,6 +21,8 @@ cd serverless-auth-go
 $env:GOOS = 'linux' or export GOOS=linux
 cd functions && go get && go build -o build/main ./src
 cd infra && cdk deploy
+# run
+go run ./src/.
 ```
 
 ## Contribution
