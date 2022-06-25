@@ -32,7 +32,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			if user != nil {
+			if user != nil && user["password"].(string) != "" {
 				log.Println(user)
 				check, _ := auth.VerifyPassword(body.Password, user["password"].(string))
 				if check {

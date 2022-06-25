@@ -261,7 +261,14 @@ func ProvidersAuthCallback(provider string, ctx *gin.Context) {
 		_, err = db.CreateUser(types.UserPayload{
 			Email:    user.Email,
 			Password: "",
-			Data:     user.RawData, // TODO: use goth user for persistance
+			Data: map[string]string{
+				"provider":       user.Provider,
+				"name":           user.Name,
+				"firstName":      user.FirstName,
+				"lastName":       user.LastName,
+				"providerUserId": user.UserID,
+				"avatarUrl":      user.AvatarURL,
+			},
 		})
 		if utils.HandlerError(ctx, err, http.StatusBadRequest) {
 			return
