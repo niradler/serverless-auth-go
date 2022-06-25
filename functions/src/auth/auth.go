@@ -257,6 +257,7 @@ func ProvidersAuthCallback(provider string, ctx *gin.Context) {
 			Email:    user.Email,
 			Password: "",
 			Data: map[string]string{
+				"email":          user.Email,
 				"provider":       user.Provider,
 				"name":           user.Name,
 				"firstName":      user.FirstName,
