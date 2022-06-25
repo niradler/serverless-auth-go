@@ -1,6 +1,6 @@
 # Serverless Auth
 
-Provide simple authentication mechanism base on aws serverless services (Dynmodb, Lambda, ApiGateway)
+Simple authentication mechanism base on aws serverless services (Dynmodb, Lambda, ApiGateway)
 
 ## Tech Stack
 
