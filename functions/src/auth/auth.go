@@ -244,7 +244,7 @@ func getProviderConfiguration(provider string) (string, string, string) {
 }
 
 func ProvidersAuthCallback(provider string, ctx *gin.Context) {
-	utils.Logger.Error("ProvidersAuthCallback:", zap.String("provider", provider))
+	utils.Logger.Info("ProvidersAuthCallback:", zap.String("provider", provider))
 	q := ctx.Request.URL.Query()
 	q.Add("provider", provider)
 	ctx.Request.URL.RawQuery = q.Encode()
@@ -255,7 +255,7 @@ func ProvidersAuthCallback(provider string, ctx *gin.Context) {
 	if utils.Debug {
 		utils.Logger.Info("user:", zap.Any("user", user))
 	}
-	utils.Logger.Error("ProvidersAuthCallback:", zap.String("email", user.Email))
+	utils.Logger.Info("ProvidersAuthCallback:", zap.String("email", user.Email))
 	existUser, _ := db.GetItem(db.ToKey("user", user.Email), "#")
 	if existUser == nil {
 		_, err = db.CreateUser(types.UserPayload{
