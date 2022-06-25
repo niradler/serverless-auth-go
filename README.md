@@ -6,7 +6,7 @@ Simple authentication mechanism base on aws serverless services (Dynmodb, Lambda
 
 - Using aws cdk (iac) to deploy the aws services. (golang)
 - Scalable api using Gin framework. (golang)
-- goth for providers logins. (github/bitbucket/gitlab/facebook/google) (only google is tested)
+- goth for providers logins. (github/bitbucket/gitlab/facebook/google) (only google/github is tested, env vars was set manually on the lambda function)
 
 ## Deploy
 
