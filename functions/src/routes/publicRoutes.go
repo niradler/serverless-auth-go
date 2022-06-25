@@ -27,7 +27,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			user, err := db.GetItem(db.ToKey("user", body.Email), db.ToKey("user", body.Email))
+			user, err := db.GetItem(db.ToKey("user", body.Email), "#")
 
 			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
@@ -63,7 +63,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			user, _ := db.GetItem(db.ToKey("user", body.Email), db.ToKey("user", body.Email))
+			user, _ := db.GetItem(db.ToKey("user", body.Email), "#")
 			if user != nil {
 				if utils.HandlerError(context, errors.New("Already exists"), http.StatusBadRequest) {
 					return

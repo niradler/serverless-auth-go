@@ -235,7 +235,7 @@ func CreateUser(userPayload types.UserPayload) (*types.UserCreated, error) {
 
 	user := types.User{
 		PK:        ToKey("user", userPayload.Email),
-		SK:        ToKey("user", userPayload.Email),
+		SK:        "#",
 		Email:     userPayload.Email,
 		Password:  userPayload.Password,
 		CreatedAt: time.Now().UnixNano(),

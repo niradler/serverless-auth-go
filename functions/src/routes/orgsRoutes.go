@@ -32,7 +32,7 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 			}
 
 			orgName := body.Name
-			existingOrg, _ := db.GetItem(db.ToKey("org", orgName), db.ToKey("org", orgName))
+			existingOrg, _ := db.GetItem(db.ToKey("org", orgName), "#")
 			if existingOrg != nil {
 				if utils.HandlerError(context, errors.New("Already exists"), http.StatusBadRequest) {
 					return
@@ -40,7 +40,7 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 			}
 			org := types.Org{
 				PK:        db.ToKey("org", orgName),
-				SK:        db.ToKey("org", orgName),
+				SK:        "#",
 				Name:      orgName,
 				CreatedBy: context.GetString("id"),
 				CreatedAt: time.Now().UnixNano(),

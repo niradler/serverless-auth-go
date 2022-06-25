@@ -183,7 +183,7 @@ func RoleCheck(ctx *gin.Context, orgId string, role string) bool {
 }
 
 func askResetPassword(email string) error {
-	user, err := db.GetItem(db.ToKey("user", email), db.ToKey("user", email))
+	user, err := db.GetItem(db.ToKey("user", email), "#")
 	if err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func ProvidersAuthCallback(provider string, ctx *gin.Context) {
 		return
 	}
 
-	existUser, _ := db.GetItem(db.ToKey("user", user.Email), db.ToKey("user", user.Email))
+	existUser, _ := db.GetItem(db.ToKey("user", user.Email), "#")
 	if existUser == nil {
 		_, err = db.CreateUser(types.UserPayload{
 			Email:    user.Email,
