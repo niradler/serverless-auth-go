@@ -64,7 +64,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 	proxyRootRes := rootRes.AddResource(jsii.String("{proxy+}"), nil)
 	proxyRootRes.AddMethod(jsii.String("ANY"), awsapigateway.NewLambdaIntegration(authFunc, nil), nil)
 
-	usersTable := awsdynamodb.NewTable(stack, jsii.String("auth-table"), &awsdynamodb.TableProps{
+	appTable := awsdynamodb.NewTable(stack, jsii.String("auth-table"), &awsdynamodb.TableProps{
 		TableName:     jsii.String(*stack.StackName() + "-table"),
 		BillingMode:   awsdynamodb.BillingMode_PAY_PER_REQUEST,
 		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
@@ -78,7 +78,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		},
 	})
 
-	usersTable.GrantReadWriteData(authFunc)
+	appTable.GrantReadWriteData(authFunc)
 
 	return stack
 }
