@@ -316,7 +316,7 @@ func GothInit() {
 		case "google":
 			goth.UseProviders(google.New(clientId, clientSecret, clientAuthCallback, "email", "profile"))
 		case "github":
-			goth.UseProviders(github.New(clientId, clientSecret, clientAuthCallback, "email", "profile"))
+			goth.UseProviders(github.New(clientId, clientSecret, clientAuthCallback, "user:email", "profile"))
 		case "facebook":
 			goth.UseProviders(facebook.New(clientId, clientSecret, clientAuthCallback, "email", "profile"))
 		case "bitbucket":
