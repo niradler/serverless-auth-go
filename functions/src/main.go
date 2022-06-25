@@ -8,7 +8,10 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
+
+	"github.com/niradler/social-lab/src/auth"
+	"github.com/niradler/social-lab/src/routes"
+	"github.com/niradler/social-lab/src/utils"
 )
 
 var ginLambda *ginadapter.GinLambda
@@ -20,28 +23,16 @@ func Handler(
 	return ginLambda.ProxyWithContext(ctx, req)
 }
 
-func handlerError(context *gin.Context, err error, status int) bool {
-	if err != nil {
-		Logger.Info("handlerError", zap.Error(err))
-		context.AbortWithStatusJSON(status,
-			gin.H{
-				"error":   "Error",
-				"message": err.Error(),
-			})
-		return true
-	}
-	return false
-}
-
 func main() {
-	InitializeLogger()
-	Logger.Info("Gin cold start")
+	utils.InitializeLogger()
+	utils.Logger.Info("Gin cold start")
+	auth.GothInit()
 	router := gin.Default()
 	router.Use(gin.Logger())
 	v1 := router.Group("/v1")
-	LoadUsersRoutes(v1)
-	LoadOrgsRoutes(v1)
-	LoadPublicRoutes(v1)
+	routes.LoadUsersRoutes(v1)
+	routes.LoadOrgsRoutes(v1)
+	routes.LoadPublicRoutes(v1)
 
 	ginLambda = ginadapter.New(router)
 

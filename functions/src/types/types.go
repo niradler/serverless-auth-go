@@ -1,4 +1,4 @@
-package main
+package types
 
 type User struct {
 	PK        string      `json:"pk,omitempty"`

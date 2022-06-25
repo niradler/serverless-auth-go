@@ -1,20 +1,23 @@
-package main
+package routes
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/niradler/social-lab/src/auth"
+	"github.com/niradler/social-lab/src/db"
+	"github.com/niradler/social-lab/src/utils"
 )
 
 func LoadUsersRoutes(router *gin.RouterGroup) {
 
 	usersRouter := router.Group("/users")
 
-	usersRouter.Use(AuthenticationMiddleware())
+	usersRouter.Use(auth.AuthenticationMiddleware())
 	{
 		usersRouter.GET("/me", func(context *gin.Context) {
-			userContext, err := GetUserContext(context.GetString("email"))
-			if handlerError(context, err, http.StatusBadRequest) {
+			userContext, err := db.GetUserContext(context.GetString("email"))
+			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
 			context.JSON(http.StatusOK, userContext)
@@ -26,11 +29,11 @@ func LoadUsersRoutes(router *gin.RouterGroup) {
 			}
 			body := Body{}
 			err := context.ShouldBindJSON(&body)
-			if handlerError(context, err, http.StatusBadRequest) {
+			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			err = UpdateUser(context.GetString("id"), body.Data)
-			if handlerError(context, err, http.StatusBadRequest) {
+			err = db.UpdateUser(context.GetString("id"), body.Data)
+			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
 			context.JSON(http.StatusOK, "")

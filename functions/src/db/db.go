@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"errors"
@@ -12,6 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+
+	"github.com/niradler/social-lab/src/types"
+	"github.com/niradler/social-lab/src/utils"
 )
 
 var usersTable = os.Getenv("USERS_TABLE")
@@ -48,12 +51,12 @@ func GetDB() *dynamodb.DynamoDB {
 	return db
 }
 
-func generateKey(key string, id string) string {
+func GenerateKey(key string, id string) string {
 	return key + "#" + id
 }
 
-func toKey(key string, id string) string {
-	return generateKey(key, toHashId(id))
+func ToKey(key string, id string) string {
+	return GenerateKey(key, utils.ToHashId(id))
 }
 
 func fromKey(keyString string) (string, string) {
@@ -61,12 +64,12 @@ func fromKey(keyString string) (string, string) {
 	return obj[0], obj[1]
 }
 
-func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
+func CreateItem[Payload types.User | types.Org | types.OrgUser](payload Payload) error {
 	db := GetDB()
 
 	item, err := dynamodbattribute.MarshalMap(payload)
 	if err != nil {
-		dump(err)
+		utils.Dump(err)
 		errors.New("error when try to convert user data to dynamodbattribute")
 		return err
 	}
@@ -75,7 +78,7 @@ func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
 		TableName: aws.String(usersTable),
 	}
 	if _, err := db.PutItem(params); err != nil {
-		dump(err)
+		utils.Dump(err)
 		return errors.New("error when try to save data to database")
 	}
 	return nil
@@ -83,7 +86,7 @@ func CreateItem[Payload User | Org | OrgUser](payload Payload) error {
 
 func UpdateUser(id string, data interface{}) error {
 	db := GetDB()
-	pk := generateKey("user", id)
+	pk := GenerateKey("user", id)
 	upd := expression.
 		Set(expression.Name("data"), expression.Value(data))
 	expr, err := expression.NewBuilder().WithUpdate(upd).Build()
@@ -105,7 +108,7 @@ func UpdateUser(id string, data interface{}) error {
 		UpdateExpression:          expr.Update(),
 	}
 	if _, err := db.UpdateItem(params); err != nil {
-		dump(err)
+		utils.Dump(err)
 		return errors.New("error when try to save data to database")
 	}
 	return nil
@@ -173,25 +176,25 @@ func GetItemByPK(key string) ([]interface{}, error) {
 	return nil, nil
 }
 
-func GetUserContext(email string) (*UserContext, error) {
-	items, _ := GetItemByPK(toKey("user", email))
+func GetUserContext(email string) (*types.UserContext, error) {
+	items, _ := GetItemByPK(ToKey("user", email))
 	if items == nil {
 		return nil, errors.New("user not found")
 	}
-	var user UserContext
-	var orgs []OrgContext
+	var user types.UserContext
+	var orgs []types.OrgContext
 	for _, i := range items {
 		obj := i.(map[string]interface{})
 		_, pkId := fromKey(obj["pk"].(string))
 		sk, skId := fromKey(obj["sk"].(string))
 		switch sk {
 		case "org":
-			orgs = append(orgs, OrgContext{
+			orgs = append(orgs, types.OrgContext{
 				Id:   skId,
 				Role: obj["role"].(string),
 			})
 		case "user":
-			user = UserContext{
+			user = types.UserContext{
 				Id:    pkId,
 				Email: obj["email"].(string),
 				Data:  obj["data"].(interface{}),
@@ -199,7 +202,7 @@ func GetUserContext(email string) (*UserContext, error) {
 
 		}
 	}
-	return &UserContext{
+	return &types.UserContext{
 		Id:    user.Id,
 		Email: user.Email,
 		Data:  user.Data,
@@ -228,11 +231,11 @@ func DeleteItem(pk string, sk string) error {
 	return nil
 }
 
-func CreateUser(userPayload UserPayload) (*UserCreated, error) {
+func CreateUser(userPayload types.UserPayload) (*types.UserCreated, error) {
 
-	user := User{
-		PK:        toKey("user", userPayload.Email),
-		SK:        toKey("user", userPayload.Email),
+	user := types.User{
+		PK:        ToKey("user", userPayload.Email),
+		SK:        ToKey("user", userPayload.Email),
 		Email:     userPayload.Email,
 		Password:  userPayload.Password,
 		CreatedAt: time.Now().UnixNano(),
@@ -245,7 +248,7 @@ func CreateUser(userPayload UserPayload) (*UserCreated, error) {
 		return nil, err
 	}
 
-	userCreated := UserCreated{
+	userCreated := types.UserCreated{
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
 	}

@@ -22,6 +22,10 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		sprops = props.StackProps
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "jwtSecret"
+	}
 
 	authFunc := awslambda.NewFunction(stack, jsii.String("API-public-handler"), &awslambda.FunctionProps{
 		FunctionName: jsii.String(*stack.StackName() + "-auth-api"),
@@ -33,6 +37,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment: &map[string]*string{
 			"USERS_TABLE": jsii.String(*stack.StackName() + "-table"),
+			"JWT_SECRET":  jsii.String(jwtSecret),
 		},
 	})
 
