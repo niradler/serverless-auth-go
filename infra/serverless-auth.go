@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -10,6 +11,8 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
+
+	"github.com/joho/godotenv"
 )
 
 type ServerlessAuthStackProps struct {
@@ -46,6 +49,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 			"SLS_AUTH_GOOGLE_CLIENT_ID":     jsii.String(googleId),
 			"SLS_AUTH_GOOGLE_CLIENT_SECRET": jsii.String(googleSecret),
 			"SLS_AUTH_CLIENT_CALLBACK":      jsii.String(clientCallback),
+			"GIN_MODE":                      jsii.String("release"),
 		},
 	})
 
@@ -85,10 +89,17 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 
 func main() {
 	app := awscdk.NewApp(nil)
+
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file")
+	}
+
 	appName := os.Getenv("SLS_AUTH_APP_NAME")
 	if appName == "" {
 		appName = "ServerlessAuthStack"
 	}
+
 	NewServerlessAuthStack(app, appName, &ServerlessAuthStackProps{
 		awscdk.StackProps{
 			Env: env(),

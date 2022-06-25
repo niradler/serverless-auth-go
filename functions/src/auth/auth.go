@@ -201,11 +201,6 @@ func askResetPassword(email string) error {
 
 func getClientCallback() string {
 
-	err := godotenv.Load()
-	if err != nil {
-		utils.Logger.Error("Error loading .env file")
-	}
-
 	clientCallback := os.Getenv("SLS_AUTH_CLIENT_CALLBACK")
 	if clientCallback == "" {
 		clientCallback = "CLIENT_CALLBACK"
@@ -292,6 +287,11 @@ func ProvidersAuthBegin(provider string, ctx *gin.Context) {
 }
 
 func GothInit() {
+	err := godotenv.Load()
+	if err != nil {
+		utils.Logger.Error("Error loading .env file")
+	}
+
 	key := os.Getenv("SLS_AUTH_SESSION_SECRET") // Replace with your SESSION_SECRET or similar
 	maxAge := 86400 * 30                        // 30 days
 	store := sessions.NewCookieStore([]byte(key))
