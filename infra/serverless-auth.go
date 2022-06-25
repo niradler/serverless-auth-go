@@ -22,10 +22,13 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		sprops = props.StackProps
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "jwtSecret"
-	}
+
+	jwtSecret := os.Getenv("SLS_AUTH_JWT_SECRET")
+	sessSecret := os.Getenv("SLS_AUTH_SESSION_SECRET")
+	clientCallback := os.Getenv("SLS_AUTH_CLIENT_CALLBACK")
+	googleCallback := os.Getenv("SLS_AUTH_GOOGLE_CALLBACK")
+	googleId := os.Getenv("SLS_AUTH_GOOGLE_CLIENT_ID")
+	googleSecret := os.Getenv("SLS_AUTH_GOOGLE_CLIENT_SECRET")
 
 	authFunc := awslambda.NewFunction(stack, jsii.String("API-public-handler"), &awslambda.FunctionProps{
 		FunctionName: jsii.String(*stack.StackName() + "-auth-api"),
@@ -36,8 +39,13 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment: &map[string]*string{
-			"AUTH_APP_TABLE": jsii.String(*stack.StackName() + "-table"),
-			"JWT_SECRET":     jsii.String(jwtSecret),
+			"AUTH_APP_TABLE":                jsii.String(*stack.StackName() + "-table"),
+			"SLS_AUTH_JWT_SECRET":           jsii.String(jwtSecret),
+			"SLS_AUTH_SESSION_SECRET":       jsii.String(sessSecret),
+			"SLS_AUTH_GOOGLE_CALLBACK":      jsii.String(googleCallback),
+			"SLS_AUTH_GOOGLE_CLIENT_ID":     jsii.String(googleId),
+			"SLS_AUTH_GOOGLE_CLIENT_SECRET": jsii.String(googleSecret),
+			"SLS_AUTH_CLIENT_CALLBACK":      jsii.String(clientCallback),
 		},
 	})
 
@@ -77,7 +85,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 
 func main() {
 	app := awscdk.NewApp(nil)
-	appName := os.Getenv("APP_NAME")
+	appName := os.Getenv("SLS_AUTH_APP_NAME")
 	if appName == "" {
 		appName = "ServerlessAuthStack"
 	}

@@ -31,7 +31,7 @@ import (
 var isProd = os.Getenv("LAMBDA_TASK_ROOT") != ""
 
 func getSecretKey() string {
-	secret := os.Getenv("JWT_SECRET")
+	secret := os.Getenv("SLS_AUTH_JWT_SECRET")
 	if secret == "" {
 		secret = "secret"
 	}
@@ -206,7 +206,7 @@ func getClientCallback() string {
 		utils.Logger.Error("Error loading .env file")
 	}
 
-	clientCallback := os.Getenv("CLIENT_CALLBACK")
+	clientCallback := os.Getenv("SLS_AUTH_CLIENT_CALLBACK")
 	if clientCallback == "" {
 		clientCallback = "CLIENT_CALLBACK"
 	}
@@ -225,17 +225,17 @@ func getProviderConfiguration(provider string) (string, string, string) {
 		utils.Logger.Error("Error loading .env file")
 	}
 
-	clientId := os.Getenv(providerUpperCase + "_CLIENT_ID")
+	clientId := os.Getenv("SLS_AUTH_" + providerUpperCase + "_CLIENT_ID")
 	if clientId == "" {
 		clientId = "clientId"
 	}
 
-	clientSecret := os.Getenv(providerUpperCase + "_CLIENT_SECRET")
+	clientSecret := os.Getenv("SLS_AUTH_" + providerUpperCase + "_CLIENT_SECRET")
 	if clientSecret == "" {
 		clientSecret = "clientSecret"
 	}
 
-	clientAuthCallback := os.Getenv(providerUpperCase + "_CALLBACK")
+	clientAuthCallback := os.Getenv("SLS_AUTH_" + providerUpperCase + "_CALLBACK")
 	if clientAuthCallback == "" {
 		clientAuthCallback = "clientAuthCallback"
 	}
@@ -292,8 +292,8 @@ func ProvidersAuthBegin(provider string, ctx *gin.Context) {
 }
 
 func GothInit() {
-	key := os.Getenv("SESSION_SECRET") // Replace with your SESSION_SECRET or similar
-	maxAge := 86400 * 30               // 30 days
+	key := os.Getenv("SLS_AUTH_SESSION_SECRET") // Replace with your SESSION_SECRET or similar
+	maxAge := 86400 * 30                        // 30 days
 	store := sessions.NewCookieStore([]byte(key))
 	store.MaxAge(maxAge)
 	store.Options.Path = "/"
