@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"os"
 
 	"github.com/davecgh/go-spew/spew"
 	"go.uber.org/zap"
@@ -11,8 +12,8 @@ import (
 )
 
 var Dump = spew.Dump
-
 var Logger *zap.Logger
+var Debug = os.Getenv("SLS_AUTH_DEBUG") == "true"
 
 func InitializeLogger() {
 	Logger, _ = zap.NewProduction()

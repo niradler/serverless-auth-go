@@ -26,6 +26,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
+	debug := os.Getenv("SLS_AUTH_DEBUG")
 	jwtSecret := os.Getenv("SLS_AUTH_JWT_SECRET")
 	sessSecret := os.Getenv("SLS_AUTH_SESSION_SECRET")
 	clientCallback := os.Getenv("SLS_AUTH_CLIENT_CALLBACK")
@@ -50,6 +51,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 			"SLS_AUTH_GOOGLE_CLIENT_SECRET": jsii.String(googleSecret),
 			"SLS_AUTH_CLIENT_CALLBACK":      jsii.String(clientCallback),
 			"GIN_MODE":                      jsii.String("release"),
+			"SLS_AUTH_DEBUG":                jsii.String(debug),
 		},
 	})
 

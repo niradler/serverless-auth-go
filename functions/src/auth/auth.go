@@ -252,6 +252,9 @@ func ProvidersAuthCallback(provider string, ctx *gin.Context) {
 	if utils.HandlerError(ctx, err, 500) {
 		return
 	}
+	if utils.Debug {
+		utils.Logger.Info("user:", zap.Any("user", user))
+	}
 	utils.Logger.Error("ProvidersAuthCallback:", zap.String("email", user.Email))
 	existUser, _ := db.GetItem(db.ToKey("user", user.Email), "#")
 	if existUser == nil {
