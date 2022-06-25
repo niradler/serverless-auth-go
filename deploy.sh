@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-npm i -g aws-cdk
+# tools for building and deploying
+go version       # > 1.18.2
+npm i -g aws-cdk # > 2.28.1 (build d035432)
 
 # This script will deploy the serverless-auth stack to aws.
 
