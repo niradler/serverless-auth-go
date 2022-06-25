@@ -255,7 +255,7 @@ func ProvidersAuthCallback(provider string, ctx *gin.Context) {
 	if utils.Debug {
 		utils.Logger.Info("user:", zap.Any("user", user))
 	}
-	if user.Email == "" {
+	if user.Email == "" || strings.Contains(user.Email, "@") == false {
 		utils.HandlerError(ctx, errors.New("missing email address."), http.StatusBadRequest)
 		return
 
