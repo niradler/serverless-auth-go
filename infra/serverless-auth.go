@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
@@ -19,6 +21,34 @@ type ServerlessAuthStackProps struct {
 	awscdk.StackProps
 }
 
+type Maps map[string]string
+
+func ReduceItem(m1, m2 Maps) Maps {
+	for key, value := range m2 {
+		m1[key] = value
+
+	}
+	return m1
+}
+
+func GetAppEnv(merged map[string]string) map[string]string {
+	allEnvMap := make(map[string]string)
+	allEnv := os.Environ()
+	prefix := "SLS_AUTH_"
+	for _, envVar := range allEnv {
+		if i := strings.Index(envVar, "="); i >= 0 {
+			key := envVar[:i]
+			value := envVar[i+1:]
+			if strings.HasPrefix(key, prefix) {
+				allEnvMap[key] = value
+			}
+		}
+
+	}
+
+	return ReduceItem(merged, allEnvMap)
+}
+
 func NewServerlessAuthStack(scope constructs.Construct, id string, props *ServerlessAuthStackProps) awscdk.Stack {
 	var sprops awscdk.StackProps
 	if props != nil {
@@ -26,13 +56,14 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	debug := os.Getenv("SLS_AUTH_DEBUG")
-	jwtSecret := os.Getenv("SLS_AUTH_JWT_SECRET")
-	sessSecret := os.Getenv("SLS_AUTH_SESSION_SECRET")
-	clientCallback := os.Getenv("SLS_AUTH_CLIENT_CALLBACK")
-	googleCallback := os.Getenv("SLS_AUTH_GOOGLE_CALLBACK")
-	googleId := os.Getenv("SLS_AUTH_GOOGLE_CLIENT_ID")
-	googleSecret := os.Getenv("SLS_AUTH_GOOGLE_CLIENT_SECRET")
+	envMap := GetAppEnv(map[string]string{
+		"GIN_MODE":       "release",
+		"AUTH_APP_TABLE": *stack.StackName() + "-table",
+	})
+
+	var cdkEnv *map[string]*string
+	data, _ := json.Marshal(envMap)
+	json.Unmarshal(data, &cdkEnv)
 
 	authFunc := awslambda.NewFunction(stack, jsii.String("API-public-handler"), &awslambda.FunctionProps{
 		FunctionName: jsii.String(*stack.StackName() + "-auth-api"),
@@ -42,17 +73,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build"), nil),
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
-		Environment: &map[string]*string{
-			"AUTH_APP_TABLE":                jsii.String(*stack.StackName() + "-table"),
-			"SLS_AUTH_JWT_SECRET":           jsii.String(jwtSecret),
-			"SLS_AUTH_SESSION_SECRET":       jsii.String(sessSecret),
-			"SLS_AUTH_GOOGLE_CALLBACK":      jsii.String(googleCallback),
-			"SLS_AUTH_GOOGLE_CLIENT_ID":     jsii.String(googleId),
-			"SLS_AUTH_GOOGLE_CLIENT_SECRET": jsii.String(googleSecret),
-			"SLS_AUTH_CLIENT_CALLBACK":      jsii.String(clientCallback),
-			"GIN_MODE":                      jsii.String("release"),
-			"SLS_AUTH_DEBUG":                jsii.String(debug),
-		},
+		Environment:  cdkEnv,
 	})
 
 	restApi := awsapigateway.NewRestApi(stack, jsii.String("RestApi"), &awsapigateway.RestApiProps{
