@@ -4,6 +4,20 @@ Simple authentication mechanism base on aws serverless services (Dynmodb, Lambda
 
 ## Usage
 
+| method | route                                | payload             | Role  | public | description             |
+| ------ | ------------------------------------ | ------------------- | ----- | ------ | ----------------------- |
+| POST   | /v1/auth/login                       | email,password      |       | true   | Login                   |
+| POST   | /v1/auth/signup                      | email,password,data |       | true   | Signup                  |
+| GET    | /v1/auth/validate                    |                     |       | true   | ValidateToken           |
+| POST   | /v1/auth/renew                       |                     |       | false  | Get new Token           |
+| GET    | /v1/auth/provider/:provider          |                     |       | true   | Login with provider     |
+| GET    | /v1/auth/provider/:provider/callback |                     |       | true   | Validate provider login |
+| GET    | /v1/users/me                         |                     |       | true   | Health check            |
+| PUT    | /v1/users/me                         | data                |       | false  | Update user data        |
+| POST   | /v1/orgs                             | name                |       | false  | Create Org              |
+| POST   | /v1/orgs/:orgId/invite               | email,role          | admin | false  | Invite user to me org   |
+| GET    | /v1/orgs/:orgId/users                |                     | admin | false  | Get org users           |
+
 ## Deploy
 
 use deploy.sh script to setup and customize the deployment

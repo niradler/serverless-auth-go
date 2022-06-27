@@ -15,6 +15,7 @@ import (
 
 	"github.com/niradler/social-lab/src/types"
 	"github.com/niradler/social-lab/src/utils"
+	"github.com/thoas/go-funk"
 )
 
 var appTable = os.Getenv("AUTH_APP_TABLE")
@@ -200,6 +201,22 @@ func GetUserContext(email string) (*types.UserContext, error) {
 		Data:  user.Data,
 		Orgs:  orgs,
 	}, nil
+}
+
+func GetOrgUsers(orgId string) (interface{}, error) {
+	db := GetDB()
+	orgKey := ToKey("org", orgId)
+	res, err := db.Scan(&dynamodb.ScanInput{
+		TableName: aws.String(appTable),
+	})
+	if err != nil {
+		return nil, err
+	}
+	orgUsers := funk.Filter(res.Items, func(orgUser types.OrgUser) bool {
+		return orgUser.SK == orgKey
+	})
+
+	return orgUsers, nil
 }
 
 func DeleteItem(pk string, sk string) error {

@@ -67,6 +67,23 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 			})
 		})
 
+		orgRouter.GET("/:orgId/users", func(context *gin.Context) {
+			orgId := context.Param("orgId")
+			id, _ := context.Get("id")
+			isValid := auth.RoleCheck(orgId, id.(string), "admin")
+			if !isValid {
+				utils.HandlerError(context, errors.New("Only admins can get org users"), http.StatusForbidden)
+				return
+			}
+
+			orgUsers, err := db.GetOrgUsers(orgId)
+			if utils.HandlerError(context, err, http.StatusBadRequest) {
+				return
+			}
+
+			context.JSON(http.StatusOK, orgUsers)
+		})
+
 		orgRouter.POST("/:orgId/invite", func(context *gin.Context) {
 			type Body struct {
 				Email string `json:"email" binding:"required"`
@@ -78,9 +95,10 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 				return
 			}
 			orgId := context.Param("orgId")
-			isValid := auth.RoleCheck(context, orgId, "admin")
+			id, _ := context.Get("email")
+			isValid := auth.RoleCheck(orgId, id.(string), "admin")
 			if !isValid {
-				utils.HandlerError(context, errors.New("Forbidden"), http.StatusForbidden)
+				utils.HandlerError(context, errors.New("Only admins can invite users"), http.StatusForbidden)
 				return
 			}
 			orgUser := types.OrgUser{

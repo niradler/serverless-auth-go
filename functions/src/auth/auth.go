@@ -175,7 +175,19 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 	}
 }
 
-func RoleCheck(ctx *gin.Context, orgId string, role string) bool {
+func RoleCheck(orgId string, userId string, role string) bool {
+	orgUser, err := db.GetItem(db.ToKey("user", userId), db.ToKey("org", orgId))
+	if err != nil {
+		return false
+	}
+	if orgUser["role"].(string) == role && orgUser["sk"].(string) == db.GenerateKey("org", orgId) {
+		return true
+	}
+
+	return false
+}
+
+func JWTRoleCheck(ctx *gin.Context, orgId string, role string) bool {
 	orgs, _ := ctx.Get("orgs")
 
 	r := funk.Find(orgs.([]types.OrgContext), func(org types.OrgContext) bool {
