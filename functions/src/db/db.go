@@ -16,6 +16,7 @@ import (
 	"github.com/niradler/social-lab/src/types"
 	"github.com/niradler/social-lab/src/utils"
 	"github.com/thoas/go-funk"
+	"go.uber.org/zap"
 )
 
 var appTable = os.Getenv("AUTH_APP_TABLE")
@@ -108,6 +109,7 @@ func UpdateUser(id string, data interface{}) error {
 }
 
 func GetItem(pk string, sk string) (map[string]interface{}, error) {
+	utils.Logger.Info("GetItem", zap.String("pk", pk), zap.String("sk", sk))
 	db := GetDB()
 	params := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
@@ -203,20 +205,29 @@ func GetUserContext(email string) (*types.UserContext, error) {
 	}, nil
 }
 
-func GetOrgUsers(orgId string) (interface{}, error) {
+func GetOrgUsers(orgId string) ([]types.OrgUser, error) {
 	db := GetDB()
-	orgKey := ToKey("org", orgId)
-	res, err := db.Scan(&dynamodb.ScanInput{
+	orgKey := GenerateKey("org", orgId)
+	result, err := db.Scan(&dynamodb.ScanInput{
 		TableName: aws.String(appTable),
 	})
 	if err != nil {
 		return nil, err
 	}
-	orgUsers := funk.Filter(res.Items, func(orgUser types.OrgUser) bool {
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+
+	var items []types.OrgUser
+	if err := dynamodbattribute.UnmarshalListOfMaps(result.Items, &items); err != nil {
+		return nil, err
+	}
+	orgUsers := funk.Filter(items, func(orgUser types.OrgUser) bool {
+		utils.Dump(orgUser)
 		return orgUser.SK == orgKey
 	})
 
-	return orgUsers, nil
+	return orgUsers.([]types.OrgUser), nil
 }
 
 func DeleteItem(pk string, sk string) error {

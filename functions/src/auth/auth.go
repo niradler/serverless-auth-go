@@ -176,7 +176,8 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 }
 
 func RoleCheck(orgId string, userId string, role string) bool {
-	orgUser, err := db.GetItem(db.ToKey("user", userId), db.ToKey("org", orgId))
+	utils.Logger.Info("RoleCheck", zap.String("orgId", orgId), zap.String("userId", userId), zap.String("role", role))
+	orgUser, err := db.GetItem(db.ToKey("user", userId), db.GenerateKey("org", orgId))
 	if err != nil {
 		return false
 	}
