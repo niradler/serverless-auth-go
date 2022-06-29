@@ -1,0 +1,44 @@
+<!-- templates/login.html -->
+
+{{template "header.html" .}}
+<section class="section">
+  <div class="columns">
+    <div class="column"></div>
+    <div class="column is-one-third">
+
+      <form action="/login" method="post">
+
+        <div class="container" style="border: 1px solid lightgray; border-radius: 3px;padding: 15px;">
+
+          {{if .title}}
+          <div class="notification is-danger is-light">
+            {{.title}}
+          </div>
+
+          {{end}}
+
+          <div class="field">
+            <label class="label">Username</label>
+            <div class="control">
+              <input class="input" type="text" placeholder="Enter Username" name="username" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Password</label>
+            <div class="control">
+              <input class="input" type="password" placeholder="Enter Password" name="password" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <button class="button is-link">Submit</button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+    <div class="column"></div>
+  </div>
+</section>
+<!-- {{template "footer.html"}} -->

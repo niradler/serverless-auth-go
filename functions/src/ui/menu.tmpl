@@ -1,0 +1,27 @@
+<!-- templates/menu.html -->
+
+{{define "menu.html"}}
+<aside class="menu" style="background-color: whitesmoke ;padding: 10px;">
+  <p class="menu-label">
+    <!-- {{.user}}'s Products -->
+  </p>
+  <ul class="menu-list">
+    <li><a>Create New Product</a></li>
+    <li><a>List Products</a></li>
+  </ul>
+    <p class="menu-label">
+    <!-- {{.user}}'s Library -->
+  </p>
+  <ul class="menu-list">
+    <li><a>List Items</a></li>
+  </ul>
+  <p class="menu-label">
+    Settings
+  </p>
+  <ul class="menu-list">
+    <li><a>Profile</a></li>
+    <li><a>Payments</a></li>
+    <li><a>Affiliates</a></li>
+  </ul>
+</aside>
+{{end}}

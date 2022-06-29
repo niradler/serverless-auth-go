@@ -28,7 +28,13 @@ func main() {
 	utils.Logger.Info("Gin cold start")
 	auth.GothInit()
 	router := gin.Default()
+
+	router.Static("src/assets", "./assets")
+	router.LoadHTMLGlob("src/ui/*.tmpl")
+	//router.LoadHTMLFiles("templates/template1.html", "templates/template2.html")
+
 	router.Use(gin.Logger())
+
 	v1 := router.Group("/v1")
 	routes.LoadUsersRoutes(v1)
 	routes.LoadOrgsRoutes(v1)

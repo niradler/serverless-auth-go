@@ -1,10 +1,7 @@
 # Build API
 
 ```
-$env:GOOS = 'linux'
-go build -o build src
-$env:GOOS = 'windows'
-gin --appPort 8280 --port 8280 --all --immediate --path ./src
+gin --appPort 8280 --port 8280 --all --immediate --path ./src or air
 ```
 
 | pk   | sk   |       |           |      |           |

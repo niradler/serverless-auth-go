@@ -5,3 +5,4 @@ cdk.out
 *.env*
 !.env.template
 .vscode
+tmp/*
