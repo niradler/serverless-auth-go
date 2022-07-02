@@ -22,4 +22,4 @@ npm i -g aws-cdk # > 2.28.1 (build d035432)
 # $env:SLS_AUTH_JWT_SECRET = ''
 
 # deploy
-cd functions && go get && export $env:GOOS='linux' && go build -o build/main ./src && cd .. && cd infra && cdk deploy
+cd server && go get && export $env:GOOS='linux' && go build -o build/main ./src && cd .. && cd infra && cdk deploy

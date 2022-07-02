@@ -10,7 +10,7 @@ ENV GOOS=linux
 WORKDIR "/app"
 COPY . .
 
-WORKDIR "/app/functions"
+WORKDIR "/app/server"
 RUN go mod download
 RUN go mod verify
 RUN go build -o build/main ./src

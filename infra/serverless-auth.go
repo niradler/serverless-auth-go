@@ -70,7 +70,7 @@ func NewServerlessAuthStack(scope constructs.Construct, id string, props *Server
 		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(512),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("../functions/build"), nil),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("../server/build"), nil),
 		Handler:      jsii.String("main"),
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 		Environment:  cdkEnv,

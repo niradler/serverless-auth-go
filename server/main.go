@@ -29,10 +29,6 @@ func main() {
 	auth.GothInit()
 	router := gin.Default()
 
-	router.Static("src/assets", "./assets")
-	router.LoadHTMLGlob("src/ui/*.tmpl")
-	//router.LoadHTMLFiles("templates/template1.html", "templates/template2.html")
-
 	router.Use(gin.Logger())
 
 	v1 := router.Group("/v1")

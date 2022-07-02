@@ -17,12 +17,6 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 
 	authRouter := router.Group("/auth")
 	{
-		authRouter.GET("/login", func(context *gin.Context) {
-			context.HTML(http.StatusOK, "login.tmpl", gin.H{
-				"title":      "Login",
-				"isLoggedIn": false,
-			})
-		})
 
 		authRouter.POST("/login", func(context *gin.Context) {
 			type Body struct {

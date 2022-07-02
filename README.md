@@ -29,10 +29,10 @@ npm i -g cdk
 git clone https://github.com/niradler/serverless-auth-go.git
 cd serverless-auth-go
 $env:GOOS = 'linux' or export GOOS=linux
-cd functions && go get && go build -o build/main ./src
+cd server && go get && go build -o build/main ./src
 cd infra && cdk deploy
 # run
-cd functions
+cd server
 go run ./src/.
 ```
 
