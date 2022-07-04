@@ -86,18 +86,18 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 		})
 
 		authRouter.GET("/validate", func(context *gin.Context) {
-			claims, valid := auth.ValidateTokenMiddleware(context)
-			if valid == false {
-				utils.HandlerError(context, errors.New("Unauthorized"), http.StatusForbidden)
+			claims, err := auth.ValidateToken(context.Request.Header.Get("Authorization"))
+			if err != nil {
+				utils.HandlerError(context, err.Error(), http.StatusForbidden)
 				return
 			}
 			context.JSON(http.StatusOK, claims)
 		})
 
 		authRouter.POST("/renew", func(context *gin.Context) {
-			claims, valid := auth.ValidateTokenMiddleware(context)
-			if valid == false {
-				utils.HandlerError(context, errors.New("Unauthorized"), http.StatusForbidden)
+			claims, err := auth.ValidateRefreshToken(context.Request.Header.Get("Authorization"))
+			if err != nil {
+				utils.HandlerError(context, err.Error(), http.StatusForbidden)
 				return
 			}
 			userContext, err := db.GetUserContext(claims.Email)

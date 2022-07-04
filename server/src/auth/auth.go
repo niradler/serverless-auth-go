@@ -39,7 +39,14 @@ func getSecretKey() string {
 	return secret
 }
 
-type SignedDetails struct {
+type RefreshTokenClaims struct {
+	Id      string `json:"id,omitempty"`
+	Email   string `json:"email,omitempty"`
+	Refresh bool   `json:"refresh,omitempty"`
+	jwt.StandardClaims
+}
+
+type TokenClaims struct {
 	Id    string             `json:"id,omitempty"`
 	Email string             `json:"email,omitempty"`
 	Data  interface{}        `json:"data,omitempty"`
@@ -50,7 +57,7 @@ type SignedDetails struct {
 var SECRET_KEY string = getSecretKey()
 
 func GenerateToken(userContext types.UserContext) (signedToken string, signedRefreshToken string, err error) {
-	claims := &SignedDetails{
+	claims := &TokenClaims{
 		Id:    userContext.Id,
 		Email: userContext.Email,
 		Data:  userContext.Data,
@@ -60,8 +67,10 @@ func GenerateToken(userContext types.UserContext) (signedToken string, signedRef
 		},
 	}
 
-	refreshClaims := &SignedDetails{
-		Email: userContext.Email,
+	refreshClaims := &RefreshTokenClaims{
+		Id:      userContext.Id,
+		Email:   userContext.Email,
+		Refresh: true,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(168)).Unix(),
 		},
@@ -87,66 +96,78 @@ func HashPassword(password string) string {
 	return string(bytes)
 }
 
-func VerifyPassword(userPassword string, providedPassword string) (bool, string) {
+func VerifyPassword(userPassword string, providedPassword string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword([]byte(providedPassword), []byte(userPassword))
 	check := true
-	msg := ""
 
 	if err != nil {
-		msg = fmt.Sprintf("login or passowrd is incorrect")
 		check = false
+		return check, err
 	}
 
-	return check, msg
+	return check, nil
 }
 
-func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
+func ValidateToken(clientToken string) (claims *TokenClaims, err error) {
+	if clientToken == "" {
+		return nil, errors.New("No Authorization header provided")
+	}
+
 	token, err := jwt.ParseWithClaims(
-		signedToken,
-		&SignedDetails{},
+		clientToken,
+		&TokenClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			return []byte(SECRET_KEY), nil
 		},
 	)
 
 	if err != nil {
-		msg = err.Error()
-		return
+		return nil, errors.New("Failed to parse token")
 	}
 
-	claims, ok := token.Claims.(*SignedDetails)
+	claims, ok := token.Claims.(*TokenClaims)
 	if !ok {
-		msg = fmt.Sprintf("the token is invalid")
-		msg = err.Error()
-		return
+		return nil, errors.New("Failed to get claims")
 	}
 
 	if claims.ExpiresAt < time.Now().Local().Unix() {
-		msg = fmt.Sprintf("token is expired")
-		msg = err.Error()
-		return
+		return nil, errors.New("Token expired")
 	}
 
-	return claims, msg
+	return claims, nil
 }
 
-func ValidateTokenMiddleware(c *gin.Context) (claims *SignedDetails, valid bool) {
-	valid = false
-	clientToken := c.Request.Header.Get("Authorization")
+func ValidateRefreshToken(clientToken string) (claims *RefreshTokenClaims, err error) {
 	if clientToken == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No Authorization header provided"})
-		c.Abort()
-		return
+		return nil, errors.New("No Authorization header provided")
 	}
 
-	claims, err := ValidateToken(clientToken)
-	if err != "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-		c.Abort()
-		return
+	token, err := jwt.ParseWithClaims(
+		clientToken,
+		&RefreshTokenClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(SECRET_KEY), nil
+		},
+	)
+
+	if err != nil {
+		return nil, errors.New("Failed to parse token")
 	}
-	valid = true
-	return claims, valid
+
+	claims, ok := token.Claims.(*RefreshTokenClaims)
+	if !ok {
+		return nil, errors.New("Failed to get claims")
+	}
+
+	if claims.Refresh != true {
+		return nil, errors.New("Not a refresh token")
+	}
+
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		return nil, errors.New("Token expired")
+	}
+
+	return claims, nil
 }
 
 func AuthenticationMiddleware() gin.HandlerFunc {
@@ -158,9 +179,9 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		claims, err := ValidateToken(clientToken)
-		if err != "" {
-			c.JSON(http.StatusForbidden, gin.H{"error": err})
+		claims, err := ValidateToken(c.Request.Header.Get("Authorization"))
+		if err != nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			c.Abort()
 			return
 		}
