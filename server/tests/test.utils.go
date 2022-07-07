@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 // This function is used for setup before executing the test functions
@@ -26,7 +27,7 @@ func testHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *
 
 	// Create the service and process the above request.
 	r.ServeHTTP(w, req)
-
+	assert.Equal(t, http.StatusCreated, w.Code)
 	if !f(w) {
 		t.Fail()
 	}

@@ -41,7 +41,6 @@ go run ./src/.
 - Using aws cdk (iac) to deploy the aws services. (golang)
 - Scalable api using Gin framework. (golang)
 - goth for providers logins. (github/bitbucket/gitlab/facebook/google) (only google/github is tested)
--
 
 ## Contribution
 

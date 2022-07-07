@@ -1,10 +1,8 @@
-# Welcome to your CDK Go project!
+# Welcome to Serverless-Auth CDK GO project
 
-This is a blank project for Go development with CDK.
+For first timer using CDK read the [documentation](https://docs.aws.amazon.com/cdk/index.html)
 
-**NOTICE**: Go support is still in Developer Preview. This implies that APIs may
-change while we address early feedback from the community. We would love to hear
-about your experience through GitHub issues.
+The CDK project will deploy all the necessary infrastructure for the Serverless-Auth.
 
 ## Useful commands
 
@@ -13,15 +11,13 @@ about your experience through GitHub issues.
 - `cdk synth` emits the synthesized CloudFormation template
 - `go test` run unit tests
 
+### For cost optimization we dont add indexes by default
+
 ```
-	usersTable.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
-		IndexName: jsii.String(config.DynamoDBGSI),
+	appTable.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
+		IndexName: jsii.String("gsi-sk"),
 		PartitionKey: &awsdynamodb.Attribute{
-			Name: jsii.String("chat_room"),
-			Type: awsdynamodb.AttributeType_STRING,
-		},
-		SortKey: &awsdynamodb.Attribute{
-			Name: jsii.String("time"),
+			Name: jsii.String("sk"),
 			Type: awsdynamodb.AttributeType_STRING,
 		},
 		ProjectionType: awsdynamodb.ProjectionType_ALL,
