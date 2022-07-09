@@ -23,6 +23,8 @@ Simple authentication mechanism base on aws serverless services (Dynmodb, Lambda
 
 use deploy.sh script to setup and customize the deployment
 
+to customize the deployment, you can use the following environment variables:
+
 ```.env
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
