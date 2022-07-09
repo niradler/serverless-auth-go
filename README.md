@@ -2,6 +2,14 @@
 
 Simple authentication mechanism base on aws serverless services (Dynmodb, Lambda, ApiGateway)
 
+## Features
+
+- Basic user authentication with email/password
+- Passwordless user authentication with email only (need to configure email provider)
+- Login with providers like Google, Facebook, etc.
+- Authentication and Authorization roles.
+- Multi tenants
+
 ## Usage
 
 | method | route                                | payload             | Role  | public | description             |

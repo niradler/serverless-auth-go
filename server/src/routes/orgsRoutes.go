@@ -115,6 +115,18 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
+
+			// err = utils.SendEmail(
+			// 	utils.EmailRequest{
+			// 		To:       body.Email,
+			// 		Subject:  "Invitation to join " + orgId,
+			// 		Template: "invitation.html",
+			// 		Args: map[string]string{
+			// 			"OrgName": os.Getenv("SLS_AUTH_APP_NAME"),
+			// 			"URL":     os.Getenv("SLS_AUTH_CLIENT_CALLBACK"),
+			// 		},
+			// 	})
+
 			context.JSON(http.StatusOK, "")
 		})
 	}
