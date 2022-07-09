@@ -7,6 +7,7 @@ Simple authentication mechanism base on aws serverless services (Dynmodb, Lambda
 | method | route                                | payload             | Role  | public | description             |
 | ------ | ------------------------------------ | ------------------- | ----- | ------ | ----------------------- |
 | POST   | /v1/auth/login                       | email,password      |       | true   | Login                   |
+| POST   | /v1/auth/login/email                 | email               |       | true   | Passwordless Login      |
 | POST   | /v1/auth/signup                      | email,password,data |       | true   | Signup                  |
 | GET    | /v1/auth/validate                    |                     |       | true   | ValidateToken           |
 | POST   | /v1/auth/renew                       |                     |       | false  | Get new Token           |
@@ -21,6 +22,24 @@ Simple authentication mechanism base on aws serverless services (Dynmodb, Lambda
 ## Deploy
 
 use deploy.sh script to setup and customize the deployment
+
+```.env
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=
+SLS_AUTH_GOOGLE_CLIENT_ID=
+SLS_AUTH_GOOGLE_CLIENT_SECRET=
+SLS_AUTH_GOOGLE_CALLBACK=
+SLS_AUTH_CLIENT_CALLBACK=
+SLS_AUTH_SESSION_SECRET=
+SLS_AUTH_JWT_SECRET=
+SLS_AUTH_APP_NAME=
+SLS_AUTH_SENDGRID_API_KEY=
+SLS_AUTH_FROM_EMAIL=
+SLS_AUTH_EMAIL_TEMPLATES_FOLDER=
+SLS_AUTH_APP_NAME=
+SLS_AUTH_APP_CONTACT=
+```
 
 ## Develop
 
