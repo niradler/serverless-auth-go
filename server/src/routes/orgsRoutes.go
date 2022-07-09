@@ -42,6 +42,7 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 				PK:        db.ToKey("org", orgName),
 				SK:        "#",
 				Name:      orgName,
+				Model:     "org",
 				CreatedBy: context.GetString("id"),
 				CreatedAt: time.Now().UnixNano(),
 			}
@@ -54,6 +55,7 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 				PK:        db.ToKey("user", context.GetString("email")),
 				SK:        db.ToKey("org", orgName),
 				Role:      "admin",
+				Model:     "orgUser",
 				CreatedAt: time.Now().UnixNano(),
 			}
 
@@ -105,6 +107,7 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 				PK:        db.ToKey("user", body.Email),
 				SK:        db.GenerateKey("org", orgId),
 				Role:      body.Role,
+				Model:     "orgUser",
 				CreatedAt: time.Now().UnixNano(),
 			}
 

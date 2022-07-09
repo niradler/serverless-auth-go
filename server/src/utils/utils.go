@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"html/template"
 	"log"
 	"net/smtp"
 	"os"
@@ -47,7 +49,6 @@ type smtpServer struct {
 	port string
 }
 
-// Address URI to smtp server.
 func (s *smtpServer) Address() string {
 	return s.host + ":" + s.port
 }
@@ -88,4 +89,27 @@ func SendEmailSendGrid(from string, to string, subject string, body string) erro
 	return nil
 }
 
-var SendEmail = SendEmailSendGrid
+type EmailRequest struct {
+	To       string
+	Subject  string
+	Template string
+	Args     map[string]string
+}
+
+func SendEmail(emailReq EmailRequest) error {
+	templatesFolder := os.Getenv("SLS_AUTH_EMAIL_TEMPLATES_FOLDER")
+	tmpl := template.Must(template.ParseFiles(templatesFolder + emailReq.Template))
+	buffer := new(bytes.Buffer)
+	err := tmpl.Execute(buffer, emailReq.Args)
+	if err != nil {
+		return err
+	}
+	body := buffer.String()
+
+	err = SendEmailSendGrid(os.Getenv("SLS_AUTH_FROM_EMAIL"), emailReq.To, emailReq.Subject, body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

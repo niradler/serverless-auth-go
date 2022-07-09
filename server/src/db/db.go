@@ -70,7 +70,6 @@ func CreateItem[Payload types.User | types.Org | types.OrgUser](payload Payload)
 		Item:      item,
 		TableName: aws.String(appTable),
 	}
-	utils.Dump(params)
 	if _, err := db.PutItem(params); err != nil {
 		utils.Dump(err)
 		return errors.New("error when try to save data to database")
@@ -172,7 +171,12 @@ func GetItemByPK(key string) ([]interface{}, error) {
 }
 
 func GetUserContext(email string) (*types.UserContext, error) {
-	items, _ := GetItemByPK(ToKey("user", email))
+	items, err := GetItemByPK(ToKey("user", email))
+
+	if err != nil {
+		return nil, err
+	}
+
 	if items == nil {
 		return nil, errors.New("user not found")
 	}
@@ -181,22 +185,35 @@ func GetUserContext(email string) (*types.UserContext, error) {
 	for _, i := range items {
 		obj := i.(map[string]interface{})
 		_, pkId := fromKey(obj["pk"].(string))
-		sk, skId := fromKey(obj["sk"].(string))
-		switch sk {
-		case "org":
+		_, skId := fromKey(obj["sk"].(string))
+		switch obj["model"].(string) {
+		case "orgUser":
 			orgs = append(orgs, types.OrgContext{
 				Id:   skId,
 				Role: obj["role"].(string),
 			})
 		case "user":
-			user = types.UserContext{
-				Id:    pkId,
-				Email: obj["email"].(string),
-				Data:  obj["data"].(interface{}),
+			data := obj["data"]
+			if data != nil {
+				user = types.UserContext{
+					Id:    pkId,
+					Email: obj["email"].(string),
+					Data:  data.(interface{}),
+				}
+			} else {
+				user = types.UserContext{
+					Id:    pkId,
+					Email: obj["email"].(string),
+					Data:  "",
+				}
 			}
-
 		}
 	}
+
+	if user.Id == "" {
+		return nil, errors.New("user error")
+	}
+
 	return &types.UserContext{
 		Id:    user.Id,
 		Email: user.Email,
@@ -256,6 +273,7 @@ func CreateUser(userPayload types.UserPayload) (*types.UserCreated, error) {
 	user := types.User{
 		PK:        ToKey("user", userPayload.Email),
 		SK:        "#",
+		Model:     "user",
 		Email:     userPayload.Email,
 		Password:  userPayload.Password,
 		CreatedAt: time.Now().UnixNano(),

@@ -2,8 +2,8 @@ package routes
 
 import (
 	"errors"
-	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/niradler/social-lab/src/auth"
@@ -34,7 +34,6 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 				return
 			}
 			if user != nil && user["password"].(string) != "" {
-				log.Println(user)
 				check, _ := auth.VerifyPassword(body.Password, user["password"].(string))
 				if check {
 					userContext, err := db.GetUserContext(user["email"].(string))
@@ -85,7 +84,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			})
 		})
 
-		authRouter.POST("/forgot", func(context *gin.Context) {
+		authRouter.POST("/login/email", func(context *gin.Context) {
 			type Body struct {
 				Email string `json:"email" binding:"required"`
 			}
@@ -94,12 +93,28 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
-			user, err := db.GetItem(db.ToKey("user", body.Email), "#")
+			utils.Logger.Info("Email login", zap.String("email", body.Email))
+			userContext, err := db.GetUserContext(body.Email)
 
-			if user != nil {
-				err = utils.SendEmail("auth@em9485.niradler.com", user["email"].(string), "Reset password", "Reset password")
-				if err != nil {
-					log.Println(err)
+			if utils.HandlerError(context, err, http.StatusInternalServerError) {
+				return
+			}
+			if userContext != nil {
+				token, _, err := auth.GenerateToken(*userContext)
+
+				err = utils.SendEmail(
+					utils.EmailRequest{
+						To:       userContext.Email,
+						Subject:  "Passwordless Login",
+						Template: "email_login.html",
+						Args: map[string]string{
+							"Logo":    os.Getenv("SLS_AUTH_APP_NAME"),
+							"URL":     os.Getenv("SLS_AUTH_CLIENT_CALLBACK") + "?token=" + token,
+							"Contact": os.Getenv("SLS_AUTH_APP_CONTACT"),
+							"Company": os.Getenv("SLS_AUTH_APP_NAME"),
+						},
+					})
+				if utils.HandlerError(context, err, http.StatusInternalServerError) {
 					return
 				}
 			}

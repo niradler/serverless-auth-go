@@ -3,6 +3,7 @@ package types
 type User struct {
 	PK        string      `json:"pk,omitempty"`
 	SK        string      `json:"sk,omitempty"`
+	Model     string      `json:"model,omitempty"`
 	Email     string      `json:"email,omitempty"`
 	Password  string      `json:"password,omitempty"`
 	CreatedAt int64       `json:"createdAt,omitempty"`
@@ -12,6 +13,7 @@ type User struct {
 type Org struct {
 	PK        string `json:"pk,omitempty"`
 	SK        string `json:"sk,omitempty"`
+	Model     string `json:"model,omitempty"`
 	Name      string `json:"name,omitempty"`
 	CreatedBy string `json:"createdBy,omitempty"`
 	CreatedAt int64  `json:"createdAt,omitempty"`
@@ -20,6 +22,7 @@ type Org struct {
 type OrgUser struct {
 	PK        string `json:"pk,omitempty"`
 	SK        string `json:"sk,omitempty"`
+	Model     string `json:"model,omitempty"`
 	Role      string `json:"role,omitempty"`
 	CreatedAt int64  `json:"createdAt,omitempty"`
 }
