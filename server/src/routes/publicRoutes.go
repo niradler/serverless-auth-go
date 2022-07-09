@@ -85,10 +85,35 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			})
 		})
 
+		authRouter.POST("/forgot", func(context *gin.Context) {
+			type Body struct {
+				Email string `json:"email" binding:"required"`
+			}
+			body := Body{}
+			err := context.ShouldBindJSON(&body)
+			if utils.HandlerError(context, err, http.StatusBadRequest) {
+				return
+			}
+			user, err := db.GetItem(db.ToKey("user", body.Email), "#")
+
+			if user != nil {
+				err = utils.SendEmail("auth@em9485.niradler.com", user["email"].(string), "Reset password", "Reset password")
+				if err != nil {
+					log.Println(err)
+					return
+				}
+			}
+
+			context.JSON(http.StatusOK, gin.H{
+				"complete": "Successfully",
+			})
+			return
+		})
+
 		authRouter.GET("/validate", func(context *gin.Context) {
 			claims, err := auth.ValidateToken(context.Request.Header.Get("Authorization"))
 			if err != nil {
-				utils.HandlerError(context, err.Error(), http.StatusForbidden)
+				utils.HandlerError(context, err, http.StatusForbidden)
 				return
 			}
 			context.JSON(http.StatusOK, claims)
@@ -97,7 +122,7 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 		authRouter.POST("/renew", func(context *gin.Context) {
 			claims, err := auth.ValidateRefreshToken(context.Request.Header.Get("Authorization"))
 			if err != nil {
-				utils.HandlerError(context, err.Error(), http.StatusForbidden)
+				utils.HandlerError(context, err, http.StatusForbidden)
 				return
 			}
 			userContext, err := db.GetUserContext(claims.Email)
