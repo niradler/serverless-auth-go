@@ -7,8 +7,8 @@ Simple authentication mechanism base on aws serverless services (Dynmodb, Lambda
 - Basic user authentication with email/password
 - Passwordless user authentication with email only (need to configure email provider)
 - Login with providers like Google, Facebook, etc.
-- Authentication and Authorization roles.
-- Multi tenants
+- Authorization roles.
+- Multi tenants (create an org, and start inviting users, and assign roles to users, admin is the default role for the user that create the org)
 
 ## Usage
 
