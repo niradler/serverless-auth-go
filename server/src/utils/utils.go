@@ -89,14 +89,38 @@ func SendEmailSendGrid(from string, to string, subject string, body string) erro
 	return nil
 }
 
-type EmailRequest struct {
+type GenericEmailArgs struct {
+	Company    string
+	Content    string
+	SubContent string
+	Title      string
+	Contact    string
+	Logo       string
+	Link       string
+	Label      string
+}
+
+func CompileGenericTemplate(args GenericEmailArgs) (string, error) {
+	templatesFolder := os.Getenv("SLS_AUTH_EMAIL_TEMPLATES_FOLDER")
+	tmpl := template.Must(template.ParseFiles(templatesFolder + "index.html"))
+	buffer := new(bytes.Buffer)
+	err := tmpl.Execute(buffer, args)
+	if err != nil {
+		return "", err
+	}
+	body := buffer.String()
+
+	return body, nil
+}
+
+type EmailTemplateRequest struct {
 	To       string
 	Subject  string
 	Template string
 	Args     map[string]string
 }
 
-func SendEmail(emailReq EmailRequest) error {
+func SendEmailTemplate(emailReq EmailTemplateRequest) error {
 	templatesFolder := os.Getenv("SLS_AUTH_EMAIL_TEMPLATES_FOLDER")
 	tmpl := template.Must(template.ParseFiles(templatesFolder + emailReq.Template))
 	buffer := new(bytes.Buffer)
@@ -105,6 +129,23 @@ func SendEmail(emailReq EmailRequest) error {
 		return err
 	}
 	body := buffer.String()
+
+	err = SendEmailSendGrid(os.Getenv("SLS_AUTH_FROM_EMAIL"), emailReq.To, emailReq.Subject, body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type EmailGenericRequest struct {
+	To      string
+	Subject string
+	Args    GenericEmailArgs
+}
+
+func SendGenericEmail(emailReq EmailGenericRequest) error {
+	body, err := CompileGenericTemplate(emailReq.Args)
 
 	err = SendEmailSendGrid(os.Getenv("SLS_AUTH_FROM_EMAIL"), emailReq.To, emailReq.Subject, body)
 	if err != nil {

@@ -101,17 +101,19 @@ func LoadPublicRoutes(router *gin.RouterGroup) {
 			}
 			if userContext != nil {
 				token, _, err := auth.GenerateToken(*userContext)
-
-				err = utils.SendEmail(
-					utils.EmailRequest{
-						To:       userContext.Email,
-						Subject:  "Passwordless Login",
-						Template: "email_login.html",
-						Args: map[string]string{
-							"Logo":    os.Getenv("SLS_AUTH_APP_NAME"),
-							"URL":     os.Getenv("SLS_AUTH_CLIENT_CALLBACK") + "?token=" + token,
-							"Contact": os.Getenv("SLS_AUTH_APP_CONTACT"),
-							"Company": os.Getenv("SLS_AUTH_APP_NAME"),
+				err = utils.SendGenericEmail(
+					utils.EmailGenericRequest{
+						To:      userContext.Email,
+						Subject: "Passwordless Login",
+						Args: utils.GenericEmailArgs{
+							Content:    "We have sent you this email in response to your request to login without a password.",
+							SubContent: "To complete the process follow the link below:",
+							Title:      "Passwordless Login",
+							Label:      "Login",
+							Logo:       os.Getenv("SLS_AUTH_APP_NAME"),
+							Link:       os.Getenv("SLS_AUTH_CLIENT_CALLBACK") + "?token=" + token,
+							Contact:    os.Getenv("SLS_AUTH_APP_CONTACT"),
+							Company:    os.Getenv("SLS_AUTH_APP_NAME"),
 						},
 					})
 				if utils.HandlerError(context, err, http.StatusInternalServerError) {

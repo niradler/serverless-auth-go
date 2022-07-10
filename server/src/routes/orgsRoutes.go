@@ -3,6 +3,7 @@ package routes
 import (
 	"errors"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -116,17 +117,24 @@ func LoadOrgsRoutes(router *gin.RouterGroup) {
 				return
 			}
 
-			// err = utils.SendEmail(
-			// 	utils.EmailRequest{
-			// 		To:       body.Email,
-			// 		Subject:  "Invitation to join " + orgId,
-			// 		Template: "invitation.html",
-			// 		Args: map[string]string{
-			// 			"OrgName": os.Getenv("SLS_AUTH_APP_NAME"),
-			// 			"URL":     os.Getenv("SLS_AUTH_CLIENT_CALLBACK"),
-			// 		},
-			// 	})
-
+			err = utils.SendGenericEmail(
+				utils.EmailGenericRequest{
+					To:      body.Email,
+					Subject: "Invitation to join " + orgId,
+					Args: utils.GenericEmailArgs{
+						Content:    "You're invited to " + orgId + ". Please click the link below and signup to join.",
+						SubContent: "To complete the process follow the link below:",
+						Title:      "Invitation to join " + orgId,
+						Label:      "Join",
+						Logo:       os.Getenv("SLS_AUTH_APP_NAME"),
+						Link:       os.Getenv("SLS_AUTH_DOMAIN"),
+						Contact:    os.Getenv("SLS_AUTH_APP_CONTACT"),
+						Company:    os.Getenv("SLS_AUTH_APP_NAME"),
+					},
+				})
+			if utils.HandlerError(context, err, http.StatusBadRequest) {
+				return
+			}
 			context.JSON(http.StatusOK, "")
 		})
 	}

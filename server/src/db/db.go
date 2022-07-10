@@ -107,6 +107,36 @@ func UpdateUser(id string, data interface{}) error {
 	return nil
 }
 
+func UpdateUserPassword(id string, password string) error {
+	db := GetDB()
+	pk := GenerateKey("user", id)
+	upd := expression.
+		Set(expression.Name("password"), expression.Value(password))
+	expr, err := expression.NewBuilder().WithUpdate(upd).Build()
+	if err != nil {
+		return err
+	}
+	params := &dynamodb.UpdateItemInput{
+		TableName: aws.String(appTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"pk": {
+				S: aws.String(pk),
+			},
+			"sk": {
+				S: aws.String(pk),
+			},
+		},
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		UpdateExpression:          expr.Update(),
+	}
+	if _, err := db.UpdateItem(params); err != nil {
+		utils.Dump(err)
+		return errors.New("error when try to save data to database")
+	}
+	return nil
+}
+
 func GetItem(pk string, sk string) (map[string]interface{}, error) {
 	utils.Logger.Info("GetItem", zap.String("pk", pk), zap.String("sk", sk))
 	db := GetDB()

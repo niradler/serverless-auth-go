@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +26,7 @@ func LoadUsersRoutes(router *gin.RouterGroup) {
 
 		usersRouter.PUT("/me", func(context *gin.Context) {
 			type Body struct {
-				Data interface{} `json:"data"`
+				Data interface{} `json:"data" binding:"required"`
 			}
 			body := Body{}
 			err := context.ShouldBindJSON(&body)
@@ -33,6 +34,28 @@ func LoadUsersRoutes(router *gin.RouterGroup) {
 				return
 			}
 			err = db.UpdateUser(context.GetString("id"), body.Data)
+			if utils.HandlerError(context, err, http.StatusBadRequest) {
+				return
+			}
+			context.JSON(http.StatusOK, "")
+		})
+
+		usersRouter.PUT("/me/password", func(context *gin.Context) {
+			type Body struct {
+				Password         string `json:"password" binding:"required"`
+				RepeatedPassword string `json:"repeatedPassword" binding:"required"`
+			}
+			body := Body{}
+			err := context.ShouldBindJSON(&body)
+			if utils.HandlerError(context, err, http.StatusBadRequest) {
+				return
+			}
+			if body.Password != body.RepeatedPassword {
+				utils.HandlerError(context, errors.New("Passwords do not match"), http.StatusBadRequest)
+				return
+			}
+			password := auth.HashPassword(body.Password)
+			err = db.UpdateUserPassword(context.GetString("id"), password)
 			if utils.HandlerError(context, err, http.StatusBadRequest) {
 				return
 			}
